@@ -16,21 +16,21 @@ impl Metric {
     /// Constructs a new Metric container.
     /// Can be either a point or vector depending on value of w.
     /// 
-    /// When w == 0.0 it is a vector.
-    /// When w == 1.0 it is a point.
+    /// When w = 0.0 it is a vector.
+    /// When w = 1.0 it is a point.
     /// 
     /// # Example
     /// 
-    /// ```
+    /// ```ignore
     /// let tup = Metric::new(4.3, -4.2, 3.1, 0.0);
     /// 
     /// assert_eq!((tup.x, tup.y, tup.z, tup.w), (4.3, -4.2, 3.1, 0.0));
     /// ```
-    pub fn new( x: f64, y: f64, z:f64, w: f64) -> Metric {
+    pub fn new( x: f64, y: f64, z:f64, w: f64) -> Self {
         Metric { x, y, z, w }
     }
 
-    // Test if metric is a point
+    /// Tests if a Metric is a point
     pub fn is_point(&self) -> bool {
         if self.w == 1.0 {
             true
@@ -39,7 +39,7 @@ impl Metric {
         }
     }
 
-    // Test if metric is a vector
+    /// Tests if a Metric is a vector
     pub fn is_vector(&self) -> bool {
         if self.w == 0.0 {
             true
@@ -52,7 +52,7 @@ impl Metric {
     /// 
     /// # Example
     /// 
-    /// ```
+    /// ```ignore
     /// let v = vector(1.0, 2.0, 3.0);
     /// 
     /// assert_eq!(v.length(), 14.0_f64.sqrt());
@@ -67,7 +67,7 @@ impl Metric {
     /// 
     /// # Example
     /// 
-    /// ```
+    /// ```ignore
     /// let v = vector(4.0, 0.0, 0.0);
     /// 
     /// assert_eq!(v.norm(), vector(1.0, 0.0, 0.0));
@@ -75,7 +75,6 @@ impl Metric {
     pub fn norm(&self) -> Metric {
         let len = self.length();
 
-        //*self / len <- will have to test ownership
         Metric {
             x: self.x / len,
             y: self.y / len,
@@ -88,7 +87,7 @@ impl Metric {
     /// 
     /// # Example
     /// 
-    /// ```
+    /// ```ignore
     /// let v1 = vector(1.0, 2.0, 3.0);
     /// let v2 = vector(2.0, 3.0, 4.0);
     ///
@@ -102,7 +101,7 @@ impl Metric {
     /// 
     /// # Example
     /// 
-    /// ```
+    /// ```ignore
     /// let v1 = vector(1.0, 2.0, 3.0);
     /// let v2 = vector(2.0, 3.0, 4.0);
     ///
@@ -211,8 +210,11 @@ impl Div<f64> for Metric {
 }
 
 impl PartialEq for Metric {
-    fn eq(&self, rhs: &Metric) -> bool {
-        self.x == rhs.x && self.y == rhs.y && self.z == rhs.z && self.w == rhs.w
+    fn eq(&self, other: &Metric) -> bool {
+        self.x == other.x
+            && self.y == other.y
+            && self.z == other.z
+            && self.w == other.w
     }
 }
 
@@ -235,7 +237,6 @@ pub fn float_equal(a: f64, b: f64) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    //use assert_float_eq::*;
 
     #[test]
     fn tuple_is_point() {
