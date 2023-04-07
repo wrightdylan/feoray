@@ -2,23 +2,23 @@
 use feoray::*;
 
 pub struct Projectile {
-    position: Metric, // Point
-    velocity: Metric  // Vector
+    position: Tuple, // Point
+    velocity: Tuple  // Vector
 }
 
 impl Projectile {
-    pub fn new( position: Metric, velocity: Metric ) -> Projectile {
+    pub fn new( position: Tuple, velocity: Tuple ) -> Projectile {
         Projectile { position, velocity }
     }
 }
 
 pub struct Environment {
-    gravity: Metric, // Vector
-    wind: Metric     // Vector
+    gravity: Tuple, // Vector
+    wind: Tuple     // Vector
 }
 
 impl Environment {
-    pub fn new ( gravity: Metric, wind: Metric ) -> Environment {
+    pub fn new ( gravity: Tuple, wind: Tuple ) -> Environment {
         Environment { gravity, wind }
     }
 }
