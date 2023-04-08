@@ -1,24 +1,32 @@
-use approx::{AbsDiffEq, abs_diff_eq};
-use num_traits::{Zero, One};
-use std::ops::{Index, IndexMut, Mul, Add};
+use approx::abs_diff_eq;
+use std::ops::{Index, IndexMut, Mul};
 use crate::Tuple;
 
-
-// Screw it! I think I'll just make a generic matrix builder since I don't know what's ahead in the book
 #[derive(Debug, Clone, Copy)]
-pub struct Matrix<T, const R: usize, const C: usize>([[T; C]; R]);
+pub struct Matrix<const S: usize> {
+    pub data: [[f64; S]; S]
+}
 
-impl<T: Default + Copy, const R: usize, const C: usize> Matrix<T, R, C> {
-    fn new(data: [[T; C]; R]) -> Self {
-        Matrix(data)
+// Functions for matrices of all sizes.
+impl<const S: usize> Matrix<S> {
+    pub fn new(data: [[f64; S]; S]) -> Self {
+        Self { data }
     }
 
-    fn transpose(&self) -> Matrix<T, C, R> {
-        let mut result = [[T::default();R]; C];
+    pub fn identity() -> Self {
+        let mut data = [[0.0; S]; S];
+        for i in 0..S {
+            data[i][i] = 1.0;
+        }
+        Self { data }
+    }
 
-        for i in 0..R {
-            for j in 0..C {
-                result[j][i] = self.0[i][j];
+    pub fn transpose(&self) -> Matrix<S> {
+        let mut result = [[0.0; S]; S];
+
+        for i in 0..S {
+            for j in 0..S {
+                result[j][i] = self.data[i][j];
             }
         }
 
@@ -27,15 +35,16 @@ impl<T: Default + Copy, const R: usize, const C: usize> Matrix<T, R, C> {
 }
 
 #[derive(Debug)]
-pub struct Matrix2<T>(Matrix<T, 2, 2>);
-pub struct Matrix3<T>(Matrix<T, 3, 3>);
-pub struct Matrix4<T>(Matrix<T, 4, 4>);
+pub struct Matrix2(Matrix<2>);
+pub struct Matrix3(Matrix<3>);
+pub struct Matrix4(Matrix<4>);
 
-impl<T: Default + Copy> Matrix2<T> {
+// Generate a 2x2 matrix using Matrix<S>
+impl Matrix2 {
     pub fn new(
-        m11: T, m12: T,
-        m21: T, m22: T
-    ) -> Matrix<T, 2, 2> {
+        m11: f64, m12: f64,
+        m21: f64, m22: f64
+    ) -> Matrix<2> {
         Matrix::new([
             [m11, m12],
             [m21, m22]
@@ -43,12 +52,13 @@ impl<T: Default + Copy> Matrix2<T> {
     }
 }
 
-impl<T: Default + Copy> Matrix3<T> {
+// Generate a 3x3 matrix using Matrix<S>
+impl Matrix3 {
     pub fn new(
-        m11: T, m12: T, m13: T,
-        m21: T, m22: T, m23: T,
-        m31: T, m32: T, m33: T
-    ) -> Matrix<T, 3, 3> {
+        m11: f64, m12: f64, m13: f64,
+        m21: f64, m22: f64, m23: f64,
+        m31: f64, m32: f64, m33: f64
+    ) -> Matrix<3> {
         Matrix::new([
             [m11, m12, m13],
             [m21, m22, m23],
@@ -57,13 +67,14 @@ impl<T: Default + Copy> Matrix3<T> {
     }
 }
 
-impl<T: Default + Copy + Zero + One> Matrix4<T> {
+// Generate a 4x4 matrix using Matrix<S>
+impl Matrix4 {
     pub fn new(
-        m11: T, m12: T, m13: T, m14: T,
-        m21: T, m22: T, m23: T, m24: T,
-        m31: T, m32: T, m33: T, m34: T,
-        m41: T, m42: T, m43: T, m44: T
-    ) -> Matrix<T, 4, 4> {
+        m11: f64, m12: f64, m13: f64, m14: f64,
+        m21: f64, m22: f64, m23: f64, m24: f64,
+        m31: f64, m32: f64, m33: f64, m34: f64,
+        m41: f64, m42: f64, m43: f64, m44: f64
+    ) -> Matrix<4> {
         Matrix::new([
             [m11, m12, m13, m14],
             [m21, m22, m23, m24],
@@ -71,46 +82,54 @@ impl<T: Default + Copy + Zero + One> Matrix4<T> {
             [m41, m42, m43, m44]
         ])
     }
+}
 
-    pub fn identity() -> Matrix<T, 4, 4> {
-        Matrix::new([
-            [T::one(), T::zero(), T::zero(), T::zero()],
-            [T::zero(), T::one(), T::zero(), T::zero()],
-            [T::zero(), T::zero(), T::one(), T::zero()],
-            [T::zero(), T::zero(), T::zero(), T::one()]
-        ])
+// Functions specific to Matrix size 2x2.
+impl Matrix<2> {
+    pub fn det(&self) -> f64 {
+        self.data[0][0] * self.data[1][1] - self.data[0][1] * self.data[1][0]
     }
 }
 
-// What a dog's breakfast! Why did I try to make this so generic? The amount of time spent doing this...
-// I think I may have to refactor and simplify this later. I believe most calculations will be f64 anyway.
-impl<T: Mul<Output = T> + Default + Copy +Add<Output = T>> Mul<Matrix<T, 4, 4>> for Matrix<T, 4, 4> {
-    type Output = Matrix<T, 4, 4>;
-
-    fn mul(self, rhs: Matrix<T, 4, 4>) -> Self::Output {
-        &self * &rhs
-    }
-}
-
-impl<T, const R: usize, const C: usize> Index<(usize, usize)> for Matrix<T, R, C> {
-    type Output = T;
-
+impl<const S: usize> Index<(usize, usize)> for Matrix<S> {
+    type Output = f64;
     fn index(&self, (row, col): (usize, usize)) -> &Self::Output {
-        &self.0[row][col]
+        &self.data[row][col]
     }
 }
 
-impl<T, const R: usize, const C: usize> IndexMut<(usize, usize)> for Matrix<T, R, C> {
+impl<const S: usize> IndexMut<(usize, usize)> for Matrix<S> {
     fn index_mut(&mut self, (row, col): (usize, usize)) -> &mut Self::Output {
-        &mut self.0[row][col]
+        &mut self.data[row][col]
     }
 }
 
-impl<T: PartialEq + AbsDiffEq<Epsilon = T>, const R: usize, const C: usize> PartialEq for Matrix<T, R, C> {
+// Multiply two matrices of same size. Multiplying matrices of different sizes may cause problems.
+impl<const S: usize> Mul for Matrix<S> {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        let mut result = Self::new([[0.0; S]; S] );
+
+        for i in 0..S{
+            for j in 0..S{
+                let mut sum = 0.0;
+                for k in 0..S {
+                    sum += self[(i, k)] * rhs[(k, j)];
+                }
+                result[(i, j)] = sum;
+            }
+        }
+
+        result
+    }
+}
+
+impl<const S: usize> PartialEq for Matrix<S> {
     fn eq(&self, other: &Self) -> bool {
-        for i in 0..R {
-            for j in 0..C {
-                if !abs_diff_eq!(self.0[i][j], other.0[i][j]) {
+        for i in 0..S {
+            for j in 0..S {
+                if !abs_diff_eq!(self.data[i][j], other.data[i][j]) {
                     return false;
                 }
             }
@@ -123,41 +142,36 @@ impl<T: PartialEq + AbsDiffEq<Epsilon = T>, const R: usize, const C: usize> Part
     }
 }
 
-impl<T: Eq + AbsDiffEq<Epsilon = T>, const R: usize, const C: usize> Eq for Matrix<T, R, C> {}
+impl<const S: usize> Eq for Matrix<S> {}
 
-impl<T: Mul<Output = T> + Default + Copy + Add<Output = T>, const R: usize, const C: usize, const RC: usize> 
-Mul<&Matrix<T, C, RC>> for &Matrix<T, R, C> {
-    type Output = Matrix<T, R, RC>;
-
-    fn mul(self, rhs: &Matrix<T, C, RC>) -> Self::Output {
-        let mut result = [[T::default(); RC]; R];
-
-        for i in 0..R {
-            for j in 0..RC {
-                for k in 0..C {
-                    result[i][j] = result[i][j] + self.0[i][k] * rhs.0[k][j];
-                }
-            }
-        }
-
-        Matrix::new(result)
-    }
-}
-
-// Look at this bollocks! I definitely need to remove generics. This is too much of a headache
-impl<T: Default + Copy + Mul<Output = T> + Add<Output = T> + PartialEq + PartialOrd +
-From<f64>> Mul<Tuple> for Matrix<T, 4, 4> 
-where T: Mul<Output = T> + Add<Output = T> + From<f64> + Into<f64>
+impl Mul<Tuple> for Matrix<4> 
 {
     type Output = Tuple;
 
     fn mul(self, rhs: Tuple) -> Self::Output {
-        let x = self.0[0][0] * rhs.x.into() + self.0[0][1] * rhs.y.into() + self.0[0][2] * rhs.z.into() + self.0[0][3] * rhs.w.into();
-        let y = self.0[1][0] * rhs.x.into() + self.0[1][1] * rhs.y.into() + self.0[1][2] * rhs.z.into() + self.0[1][3] * rhs.w.into();
-        let z = self.0[2][0] * rhs.x.into() + self.0[2][1] * rhs.y.into() + self.0[2][2] * rhs.z.into() + self.0[2][3] * rhs.w.into();
-        let w = self.0[3][0] * rhs.x.into() + self.0[3][1] * rhs.y.into() + self.0[3][2] * rhs.z.into() + self.0[3][3] * rhs.w.into();
+        let mut result = Tuple::new(0.0, 0.0, 0.0, 0.0);
 
-        Tuple { x: x.into(), y: y.into(), z: z.into(), w: w.into()}
+        for i in 0..4 {
+            let mut sum = 0.0;
+            for j in 0..4 {
+                sum += self.data[i][j] * match j {
+                    0 => rhs.x,
+                    1 => rhs.y,
+                    2 => rhs.z,
+                    3 => rhs.w,
+                    _ => unreachable!()
+                };
+            }
+            match i {
+                0 => result.x = sum,
+                1 => result.y = sum,
+                2 => result.z = sum,
+                3 => result.w = sum,
+                _ => unreachable!()
+            };
+        }
+
+        result
     }
 }
 
@@ -272,7 +286,7 @@ mod tests {
             2.0, 4.0, 8.0, 16.0,
             4.0, 8.0, 16.0, 32.0
         );
-        let i = Matrix4::identity();
+        let i = Matrix::<4>::identity();
 
         assert_eq!(m * i, m);
     }
@@ -293,5 +307,16 @@ mod tests {
         );
 
         assert_eq!(m.transpose(), t);
+    }
+
+    #[test]
+    fn find_determinant() {
+        // Function only available for 2x2 matrix
+        let m = Matrix2::new(
+            1.0, 5.0,
+            -3.0, 2.0
+        );
+
+        assert_eq!(m.det(), 17.0);
     }
 }

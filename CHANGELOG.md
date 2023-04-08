@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.0.4] - 2023-04-08
+
+### Changed
+- Refactored code. Type generic removed to greatly simplify (since all calculations will likey be in f64 anyway). As matrices are always square, reduced size generic down to one.
+
 ## [0.0.3] - 2023-04-08
 
 ### Added
