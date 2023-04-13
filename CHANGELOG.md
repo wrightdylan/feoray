@@ -1,5 +1,13 @@
 # Change Log
 
+## [0.0.5] - 2023-04-13
+
+## Added
+- Extra matrix functions (cofactors, determinants, inverse).
+
+## Changed
+- Refactored code yet again. Completely removed generics from matrices, and gone back to the original plan of using a flat vector. Use traits to handle size specifics rather than struct aliases and a size generic.
+
 ## [0.0.4] - 2023-04-08
 
 ### Changed

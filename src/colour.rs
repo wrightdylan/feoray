@@ -158,14 +158,14 @@ fn scale_channel(channel: f32) -> u8 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use assert_float_eq::*;
+    use assert_approx_eq::assert_approx_eq;
 
     #[test]
     fn test_colour_struct() {
         let c = Colour::new(-0.5, 0.4, 1.7);
-        assert_float_absolute_eq!(c.r, -0.5);
-        assert_float_absolute_eq!(c.g, 0.4);
-        assert_float_absolute_eq!(c.b, 1.7);
+        assert_approx_eq!(c.r, -0.5);
+        assert_approx_eq!(c.g, 0.4);
+        assert_approx_eq!(c.b, 1.7);
     }
 
     #[test]
@@ -174,9 +174,9 @@ mod tests {
         let c2 = colour(0.7, 0.1, 0.25);
         let c = c1 + c2;
 
-        assert_float_absolute_eq!(c.r, 1.6);
-        assert_float_absolute_eq!(c.g, 0.7);
-        assert_float_absolute_eq!(c.b, 1.0);
+        assert_approx_eq!(c.r, 1.6);
+        assert_approx_eq!(c.g, 0.7);
+        assert_approx_eq!(c.b, 1.0);
     }
 
     #[test]
@@ -185,9 +185,9 @@ mod tests {
         let c2 = colour(0.7, 0.1, 0.25);
         let c = c1 - c2;
 
-        assert_float_absolute_eq!(c.r, 0.2);
-        assert_float_absolute_eq!(c.g, 0.5);
-        assert_float_absolute_eq!(c.b, 0.5);
+        assert_approx_eq!(c.r, 0.2);
+        assert_approx_eq!(c.g, 0.5);
+        assert_approx_eq!(c.b, 0.5);
     }
 
     #[test]
@@ -203,9 +203,9 @@ mod tests {
         let c2 = colour(0.9, 1.0, 0.1);
         let c = c1 * c2;
 
-        assert_float_absolute_eq!(c.r, 0.9);
-        assert_float_absolute_eq!(c.g, 0.2);
-        assert_float_absolute_eq!(c.b, 0.04);
+        assert_approx_eq!(c.r, 0.9);
+        assert_approx_eq!(c.g, 0.2);
+        assert_approx_eq!(c.b, 0.04);
     }
 
     #[test]
