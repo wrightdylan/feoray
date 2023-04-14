@@ -1,5 +1,13 @@
 # Change Log
 
+## [0.0.6] - 2023-04-14
+
+## Added
+- Translate, scale, rotate,and shear matrix transformations.
+
+## Changed
+- Programme now outputs a clock instead of a trajectory plot.
+
 ## [0.0.5] - 2023-04-13
 
 ## Added

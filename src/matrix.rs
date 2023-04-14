@@ -109,7 +109,7 @@ trait Matrix3 {
     fn empty() -> Self;
     fn minor(&self, row: usize, col: usize) -> f64;
 }
-trait Matrix4 {
+pub trait Matrix4 {
     fn new(
         m11: f64, m12: f64, m13: f64, m14: f64,
         m21: f64, m22: f64, m23: f64, m24: f64,

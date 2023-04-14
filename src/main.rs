@@ -1,50 +1,19 @@
 #![warn(clippy::pedantic)]
 use feoray::*;
-
-pub struct Projectile {
-    position: Tuple, // Point
-    velocity: Tuple  // Vector
-}
-
-impl Projectile {
-    pub fn new( position: Tuple, velocity: Tuple ) -> Projectile {
-        Projectile { position, velocity }
-    }
-}
-
-pub struct Environment {
-    gravity: Tuple, // Vector
-    wind: Tuple     // Vector
-}
-
-impl Environment {
-    pub fn new ( gravity: Tuple, wind: Tuple ) -> Environment {
-        Environment { gravity, wind }
-    }
-}
-
-pub fn tick(env: &Environment, proj: Projectile) -> Projectile {
-    let position = proj.position + proj.velocity;
-    let velocity = proj.velocity + env.gravity + env.wind;
-    Projectile { position, velocity }
-}
+use std::f64::consts::PI;
 
 fn main() {
-    let mut p = Projectile::new(point(0.0, 1.0, 0.0), vector(1.0, 1.8, 0.0).norm() * 11.25);
-    let e = Environment::new(vector(0.0, -0.1, 0.0), vector(-0.01, 0.0, 0.0));
-    let mut cnvs = canvas(900, 500);
-    let mut ticks = 0;
+    let mut cnvs = canvas(80, 80);
 
-    while p.position.y > 0.0 {
-        p = tick(&e, p);
-        let x_pos = p.position.x as usize;
-        let y_pos = p.position.y as usize;
-        if x_pos < cnvs.width && y_pos < cnvs.height {
-            cnvs.write_pix(x_pos, cnvs.height - y_pos - 1, Colour::red());
+    for i in 0..12 {
+        let transform: Matrix = Matrix::translate(40.0, 0.0, 40.0)
+            * Matrix::rot_y((PI * i as f64) / 6.0)
+            * Matrix::scale(0.0, 0.0, 30.0);
+        let p = transform * point(0.0, 0.0, 1.0);
+        if p.x < cnvs.width as f64 && p.z < cnvs.height as f64 {
+            cnvs.write_pix(p.x as usize, cnvs.height - p.z as usize - 1, Colour::red());
         }
-        ticks += 1;
     }
 
-    println!("Time to reach the ground is {} ticks.", ticks);
-    cnvs.export("projectile.jpg").unwrap();
+    cnvs.export("clock.jpg").unwrap();
 }
