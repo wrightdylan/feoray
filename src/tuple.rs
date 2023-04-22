@@ -1,7 +1,6 @@
 #![allow(unused)]
 use std::ops::{Add, Div, Mul, Neg, Sub};
-
-const EPSILON: f64 = 0.00001;
+use crate::EPSILON;
 
 // A struct that handles both points and vectors.
 #[derive(Debug, Clone, Copy)]

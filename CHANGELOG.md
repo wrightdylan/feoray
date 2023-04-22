@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.0.7] - 2023-04-22
+
+## Added
+- Rays, and ray-object intersections.
+- First primitive shape: the sphere!
+
 ## [0.0.6] - 2023-04-14
 
 ## Added
