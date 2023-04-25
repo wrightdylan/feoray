@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 use std::ops::Index;
 use crate::{EPSILON, Object};
 
-#[derive(Debug, Clone, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialOrd)]
 pub struct Intersection {
     pub t: f64,
     pub object: Object
@@ -75,11 +75,11 @@ impl Index<usize> for Intersections {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{point, vector, Ray, Sphere};
+    use crate::{point, vector, Ray};
 
     #[test]
     fn intersection_encapsulates_t_and_object() {
-        let s = Object::new_sphere(Sphere::default());
+        let s = Object::new_sphere();
         let i = Intersection::new(3.5, s);
 
         assert_eq!(i.t, 3.5);
@@ -88,7 +88,7 @@ mod tests {
 
     #[test]
     fn aggregating_intersections() {
-        let s = Object::new_sphere(Sphere::default());
+        let s = Object::new_sphere();
         let i1 = Intersection::new(1.0, s);
         let i2 = Intersection::new(2.0, s);
         let mut intrsc = vec![];
@@ -107,7 +107,7 @@ mod tests {
             point(0.0, 0.0, 0.0),
             vector(0.0, 0.0, 1.0)
         );
-        let s = Object::new_sphere(Sphere::default());
+        let s = Object::new_sphere();
         let xs = s.intersect(r);
 
         assert_eq!(xs.len(), 2);
@@ -117,7 +117,7 @@ mod tests {
 
     #[test]
     fn the_hit_when_all_ints_have_pos_t() {
-        let s = Object::new_sphere(Sphere::default());
+        let s = Object::new_sphere();
         let i1 = Intersection::new(1.0, s);
         let i2 = Intersection::new(2.0, s);
         let xs = Intersections::new(vec![i1.clone(), i2]);
@@ -127,7 +127,7 @@ mod tests {
 
     #[test]
     fn the_hit_when_some_ints_have_neg_t() {
-        let s = Object::new_sphere(Sphere::default());
+        let s = Object::new_sphere();
         let i1 = Intersection::new(-1.0, s);
         let i2 = Intersection::new(1.0, s);
         let xs = Intersections::new(vec![i1, i2.clone()]);
@@ -137,7 +137,7 @@ mod tests {
 
     #[test]
     fn the_hit_when_all_ints_have_neg_t() {
-        let s = Object::new_sphere(Sphere::default());
+        let s = Object::new_sphere();
         let i1 = Intersection::new(-2.0, s);
         let i2 = Intersection::new(-1.0, s);
         let xs = Intersections::new(vec![i1, i2.clone()]);
@@ -147,7 +147,7 @@ mod tests {
 
     #[test]
     fn the_hit_always_the_lowest_pos_t() {
-        let s = Object::new_sphere(Sphere::default());
+        let s = Object::new_sphere();
         let i1 = Intersection::new(5.0, s);
         let i2 = Intersection::new(7.0, s);
         let i3 = Intersection::new(-3.0, s);

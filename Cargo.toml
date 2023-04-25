@@ -1,6 +1,6 @@
 [package]
 name = "feoray"
-version = "0.0.7"
+version = "0.0.8"
 edition = "2021"
 authors = ["Dylan Wright"]
 description = "A CLI ray-tracer written in Rust."
@@ -15,6 +15,7 @@ assert_approx_eq = "1.1.0"
 [dependencies]
 approx = "0.5.1"
 image = "0.24.6"
+nalgebra = "0.32.2"
 num-traits = "0.2.15"
 
 [build]

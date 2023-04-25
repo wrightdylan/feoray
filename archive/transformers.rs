@@ -1,53 +1,58 @@
 // More than meets the eye
-use nalgebra::{Matrix4, Vector3};
+use crate::{Matrix, Matrix4};
 
-// Previous iterations of transformers.rs (i.e. pre-nalgebra refactoring) can be
-// found in the archive folder. This version mostly adapts native nalgebra functionality
-// to fit previous version.
-
-pub trait Transform {
-    fn translate(x: f64, y: f64, z: f64) -> Matrix4<f64>;
-    fn nuscale(x: f64, y: f64, z: f64) -> Matrix4<f64>;
-    fn uscale(s: f64) -> Matrix4<f64>;
-    fn rot_x(rad: f64) -> Matrix4<f64>;
-    fn rot_y(rad: f64) -> Matrix4<f64>;
-    fn rot_z(rad: f64) -> Matrix4<f64>;
-    fn shear(xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> Matrix4<f64>;
-}
-
-impl Transform for Matrix4<f64> {
-    fn translate(x: f64, y: f64, z: f64) -> Matrix4<f64> {
-        Matrix4::new_translation(&Vector3::new(x, y, z))
+impl Matrix {
+    pub fn translate(x: f64, y: f64, z: f64) -> Matrix {
+        let mut trm: Matrix = Matrix4::id();
+        trm[(0, 3)] = x;
+        trm[(1, 3)] = y;
+        trm[(2, 3)] = z;
+        trm
     }
 
-    fn nuscale(x: f64, y: f64, z: f64) -> Matrix4<f64> {
-        Matrix4::new_nonuniform_scaling(&Vector3::new(x, y, z))
+    pub fn scale(x: f64, y: f64, z: f64) -> Matrix {
+        let mut scm: Matrix = Matrix4::id();
+        scm[(0, 0)] = x;
+        scm[(1, 1)] = y;
+        scm[(2, 2)] = z;
+        scm
     }
 
-    fn uscale(s: f64) -> Matrix4<f64> {
-        Matrix4::new_scaling(s)
+    pub fn rot_x(rad: f64) -> Matrix {
+        let mut rxm: Matrix = Matrix4::id();
+        rxm[(1, 1)] = rad.cos();
+        rxm[(1, 2)] = -rad.sin();
+        rxm[(2, 1)] = rad.sin();
+        rxm[(2, 2)] = rad.cos();
+        rxm
     }
 
-    fn rot_x(rad: f64) -> Matrix4<f64> {
-        Matrix4::new_rotation(Vector3::new(rad, 0.0, 0.0))
+    pub fn rot_y(rad: f64) -> Matrix {
+        let mut rym: Matrix = Matrix4::id();
+        rym[(0, 0)] = rad.cos();
+        rym[(0, 2)] = rad.sin();
+        rym[(2, 0)] = -rad.sin();
+        rym[(2, 2)] = rad.cos();
+        rym
     }
 
-    fn rot_y(rad: f64) -> Matrix4<f64> {
-        Matrix4::new_rotation(Vector3::new(0.0, rad, 0.0))
+    pub fn rot_z(rad: f64) -> Matrix {
+        let mut rzm: Matrix = Matrix4::id();
+        rzm[(0, 0)] = rad.cos();
+        rzm[(0, 1)] = -rad.sin();
+        rzm[(1, 0)] = rad.sin();
+        rzm[(1, 1)] = rad.cos();
+        rzm
     }
 
-    fn rot_z(rad: f64) -> Matrix4<f64> {
-        Matrix4::new_rotation(Vector3::new(0.0, 0.0, rad))
-    }
-
-    fn shear(xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> Matrix4<f64> {
-        let mut shm = Matrix4::identity();
-        shm.m12 = xy;
-        shm.m13 = xz;
-        shm.m21 = yx;
-        shm.m23 = yz;
-        shm.m31 = zx;
-        shm.m32 = zy;
+    pub fn shear(xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> Matrix {
+        let mut shm: Matrix = Matrix4::id();
+        shm[(0, 1)] = xy;
+        shm[(0, 2)] = xz;
+        shm[(1, 0)] = yx;
+        shm[(1, 2)] = yz;
+        shm[(2, 0)] = zx;
+        shm[(2, 1)] = zy;
         shm
     }
 }
@@ -62,7 +67,7 @@ mod tests {
 
     #[test]
     fn mul_by_translation_matrix() {
-        let m = Matrix4::translate(5.0, -3.0, 2.0);
+        let m: Matrix = Matrix::translate(5.0, -3.0, 2.0);
         let p = point(-3.0, 4.0, 5.0);
         let r = point(2.0, 1.0,7.0);
 
@@ -71,8 +76,8 @@ mod tests {
 
     #[test]
     fn mul_by_inv_of_matrix() {
-        let m = Matrix4::translate(5.0, -3.0, 2.0);
-        let i = m.try_inverse().unwrap();
+        let m: Matrix = Matrix::translate(5.0, -3.0, 2.0);
+        let i = m.inverse();
         let p = point(-3.0, 4.0, 5.0);
         let r = point(-8.0, 7.0, 3.0);
 
@@ -81,7 +86,7 @@ mod tests {
 
     #[test]
     fn translation_not() {
-        let m = Matrix4::translate(5.0, -3.0, 2.0);
+        let m: Matrix = Matrix::translate(5.0, -3.0, 2.0);
         let v = vector(-3.0, 4.0, 5.0);
 
         assert_eq!(m * v, v);
@@ -89,7 +94,7 @@ mod tests {
 
     #[test]
     fn scaling_point() {
-        let m = Matrix4::nuscale(2.0, 3.0, 4.0);
+        let m: Matrix = Matrix::scale(2.0, 3.0, 4.0);
         let p = point(-4.0, 6.0, 8.0);
         let r = point(-8.0, 18.0, 32.0);
 
@@ -98,7 +103,7 @@ mod tests {
 
     #[test]
     fn scaling_vector() {
-        let m = Matrix4::nuscale(2.0, 3.0, 4.0);
+        let m: Matrix = Matrix::scale(2.0, 3.0, 4.0);
         let v = vector(-4.0, 6.0, 8.0);
         let r = vector(-8.0, 18.0, 32.0);
 
@@ -107,16 +112,16 @@ mod tests {
 
     #[test]
     fn mul_inv_of_scaling_matrix() {
-        let m = Matrix4::nuscale(2.0, 3.0, 4.0);
+        let m: Matrix = Matrix::scale(2.0, 3.0, 4.0);
         let v = vector(-4.0, 6.0, 8.0);
         let r = vector(-2.0, 2.0, 2.0);
 
-        assert_eq!(m.try_inverse().unwrap() * v, r);
+        assert_eq!(m.inverse() * v, r);
     }
 
     #[test]
     fn reflection_is_scaling() {
-        let m = Matrix4::nuscale(-1.0, 1.0, 1.0);
+        let m: Matrix = Matrix::scale(-1.0, 1.0, 1.0);
         let p = point(2.0, 3.0, 4.0);
         let r = point(-2.0, 3.0, 4.0);
 
@@ -125,8 +130,8 @@ mod tests {
 
     #[test]
     fn rotating_point_around_x() {
-        let hq = Matrix4::rot_x(PI / 4.0);
-        let fq = Matrix4::rot_x(PI / 2.0);
+        let hq: Matrix = Matrix::rot_x(PI / 4.0);
+        let fq: Matrix = Matrix::rot_x(PI / 2.0);
         let p = point(0.0, 1.0, 0.0);
         let hqp = hq * p;
         let fqp = fq * p;
@@ -141,9 +146,9 @@ mod tests {
 
     #[test]
     fn inv_rotate_around_x() {
-        let hq = Matrix4::rot_x(PI / 4.0);
+        let hq: Matrix = Matrix::rot_x(PI / 4.0);
         let p = point(0.0, 1.0, 0.0);
-        let hqpi = hq.try_inverse().unwrap() * p;
+        let hqpi = hq.inverse() * p;
 
         assert_approx_eq!(hqpi.x, 0.0);
         assert_approx_eq!(hqpi.y, 2.0_f64.sqrt()/2.0);
@@ -152,8 +157,8 @@ mod tests {
 
     #[test]
     fn rotating_point_around_y() {
-        let hq = Matrix4::rot_y(PI / 4.0);
-        let fq = Matrix4::rot_y(PI / 2.0);
+        let hq: Matrix = Matrix::rot_y(PI / 4.0);
+        let fq: Matrix = Matrix::rot_y(PI / 2.0);
         let p = point(0.0, 0.0, 1.0);
         let hqp = hq * p;
         let fqp = fq * p;
@@ -168,8 +173,8 @@ mod tests {
 
     #[test]
     fn rotating_point_around_z() {
-        let hq = Matrix4::rot_z(PI / 4.0);
-        let fq = Matrix4::rot_z(PI / 2.0);
+        let hq: Matrix = Matrix::rot_z(PI / 4.0);
+        let fq: Matrix = Matrix::rot_z(PI / 2.0);
         let p = point(0.0, 1.0, 0.0);
         let hqp = hq * p;
         let fqp = fq * p;
@@ -184,7 +189,7 @@ mod tests {
 
     #[test]
     fn shear_moves_x_ipt_y() {
-        let m = Matrix4::shear(1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        let m: Matrix = Matrix::shear(1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
         let p = point(2.0, 3.0, 4.0);
         let r = point(5.0, 3.0, 4.0);
 
@@ -193,7 +198,7 @@ mod tests {
 
     #[test]
     fn shear_moves_x_ipt_z() {
-        let m = Matrix4::shear(0.0, 1.0, 0.0, 0.0, 0.0, 0.0);
+        let m: Matrix = Matrix::shear(0.0, 1.0, 0.0, 0.0, 0.0, 0.0);
         let p = point(2.0, 3.0, 4.0);
         let r = point(6.0, 3.0, 4.0);
 
@@ -202,7 +207,7 @@ mod tests {
 
     #[test]
     fn shear_moves_y_ipt_x() {
-        let m = Matrix4::shear(0.0, 0.0, 1.0, 0.0, 0.0, 0.0);
+        let m: Matrix = Matrix::shear(0.0, 0.0, 1.0, 0.0, 0.0, 0.0);
         let p = point(2.0, 3.0, 4.0);
         let r = point(2.0, 5.0, 4.0);
 
@@ -211,7 +216,7 @@ mod tests {
 
     #[test]
     fn shear_moves_y_ipt_z() {
-        let m = Matrix4::shear(0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+        let m: Matrix = Matrix::shear(0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
         let p = point(2.0, 3.0, 4.0);
         let r = point(2.0, 7.0, 4.0);
 
@@ -220,7 +225,7 @@ mod tests {
 
     #[test]
     fn shear_moves_z_ipt_x() {
-        let m = Matrix4::shear(0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+        let m: Matrix = Matrix::shear(0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
         let p = point(2.0, 3.0, 4.0);
         let r = point(2.0, 3.0, 6.0);
 
@@ -229,7 +234,7 @@ mod tests {
 
     #[test]
     fn shear_moves_z_ipt_y() {
-        let m = Matrix4::shear(0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+        let m: Matrix = Matrix::shear(0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
         let p = point(2.0, 3.0, 4.0);
         let r = point(2.0, 3.0, 7.0);
 
@@ -239,9 +244,9 @@ mod tests {
     #[test]
     fn individual_transforms_in_sequence() {
         let p = point(1.0, 0.0, 1.0);
-        let a = Matrix4::rot_x(PI / 2.0);
-        let b = Matrix4::nuscale(5.0, 5.0, 5.0);
-        let c = Matrix4::translate(10.0, 5.0, 7.0);
+        let a: Matrix = Matrix::rot_x(PI / 2.0);
+        let b: Matrix = Matrix::scale(5.0, 5.0, 5.0);
+        let c: Matrix = Matrix::translate(10.0, 5.0, 7.0);
 
         let p2 = a * p;
         assert_approx_eq!(p2.x, 1.0);
@@ -262,9 +267,9 @@ mod tests {
     #[test]
     fn chained_transforms_ro() {
         let p = point(1.0, 0.0, 1.0);
-        let a = Matrix4::rot_x(PI / 2.0);
-        let b = Matrix4::nuscale(5.0, 5.0, 5.0);
-        let c = Matrix4::translate(10.0, 5.0, 7.0);
+        let a: Matrix = Matrix::rot_x(PI / 2.0);
+        let b: Matrix = Matrix::scale(5.0, 5.0, 5.0);
+        let c: Matrix = Matrix::translate(10.0, 5.0, 7.0);
 
         let t = c * b * a;
         let r = t * p;

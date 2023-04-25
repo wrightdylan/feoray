@@ -1,23 +1,25 @@
-use crate::{Tuple, Matrix};
+use nalgebra::{Matrix4, Vector4};
+
+use crate::Tuple;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Ray {
-    pub origin: Tuple,
-    pub direction: Tuple
+    pub origin: Vector4<f64>,
+    pub direction: Vector4<f64>
 }
 
 impl Ray {
-    pub fn new(origin: Tuple, direction: Tuple) -> Self {
+    pub fn new(origin: Vector4<f64>, direction: Vector4<f64>) -> Self {
         if !origin.is_point() { panic!("origin should be a point"); }
         if !direction.is_vector() { panic!("direction should be a vector"); }
         Ray { origin, direction }
     }
 
-    pub fn position(&self, t: f64) -> Tuple {
+    pub fn position(&self, t: f64) -> Vector4<f64> {
         self.origin + self.direction * t
     }
 
-    pub fn transform(&self, m: Matrix) -> Ray {
+    pub fn transform(&self, m: Matrix4<f64>) -> Ray {
         Ray::new(m.clone() * self.origin, m * self.direction)
     }
 }
@@ -25,7 +27,7 @@ impl Ray {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{point, vector};
+    use crate::{point, vector, Transform};
 
     #[test]
     fn create_and_query_ray() {
@@ -50,7 +52,7 @@ mod tests {
     #[test]
     fn translating_a_ray() {
         let r = Ray::new(point(1.0, 2.0, 3.0), vector(0.0, 1.0, 0.0));
-        let m = Matrix::translate(3.0, 4.0, 5.0);
+        let m = Matrix4::translate(3.0, 4.0, 5.0);
         let r2 = r.transform(m);
 
         assert_eq!(r2.origin, point(4.0, 6.0, 8.0));
@@ -60,7 +62,7 @@ mod tests {
     #[test]
     fn scaling_a_ray() {
         let r = Ray::new(point(1.0, 2.0, 3.0), vector(0.0, 1.0, 0.0));
-        let m = Matrix::scale(2.0, 3.0, 4.0);
+        let m = Matrix4::nuscale(2.0, 3.0, 4.0);
         let r2 = r.transform(m);
 
         assert_eq!(r2.origin, point(2.0, 6.0, 12.0));

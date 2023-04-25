@@ -1,5 +1,14 @@
 # Change Log
 
+## [0.0.8] - 2023-04-25
+
+## Added
+- Archive directory containing output images from the 'Putting It Together' sections. Dumped affected files from before refactoring to `nalgebra`.
+
+## Changed
+- Refactored Matrix **yet again** to use highly optimised Matrix library from `nalgebra`. Hopefully this should reduce Big-O complexity. Also allows Copy trait. I could also have reverted to my v2 matrix file which uses a single generic and also allows the Copy trait (as it doesn't Vec, so doesn't allocate to heap), but it would be better to use an optimised library. So now the 'matrix' file is essentially nothing but tests.
+- Modified functionality of intersections to find hits directly from Objects rather than Primitives.
+
 ## [0.0.7] - 2023-04-22
 
 ## Added
