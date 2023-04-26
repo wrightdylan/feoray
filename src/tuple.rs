@@ -8,6 +8,8 @@ use nalgebra::Vector4;
 pub trait Tuple {
     fn is_point(&self) -> bool;
     fn is_vector(&self) -> bool;
+    fn reflect(&self, n: Vector4<f64>) -> Vector4<f64>;
+    fn to_5dp(&self) -> Vector4<f64>;
     fn xprod(&self, rhs: &Vector4<f64>) -> Vector4<f64>;
 }
 
@@ -20,6 +22,19 @@ impl Tuple for Vector4<f64> {
     /// Tests if a Tuple is a vector
     fn is_vector(&self) -> bool {
         self.w == 0.0
+    }
+
+    fn reflect(&self, n: Vector4<f64>) -> Vector4<f64> {
+        self - n * 2.0 * self.dot(&n)
+    }
+
+    /// Rounds a Tuple to 5dp. Only useful for tests.
+    fn to_5dp(&self) -> Self {
+        let mut res = Vector4::zeros();
+        for i in 0..4 {
+            res[i] = (self[i] * 100000.0).round() / 100000.0;
+        }
+        res
     }
 
     // Have to use a modification of my xprod method as nalgebra version will
@@ -217,5 +232,22 @@ mod tests {
 
         assert_eq!(v1.xprod(&v2), vector(-1.0, 2.0, -1.0));
         assert_eq!(v2.xprod(&v1), vector(1.0, -2.0, 1.0));
+    }
+
+    #[test]
+    fn reflecting_vector_approaching_at_45d() {
+        let v = vector(1.0, -1.0, 0.0);
+        let n = vector(0.0, 1.0, 0.0);
+
+        assert_eq!(v.reflect(n).to_5dp(), vector(1.0, 1.0, 0.0));
+    }
+
+    #[test]
+    fn reflecting_vector_off_slanted_surface() {
+        let v = vector(0.0, -1.0, 0.0);
+        let irr_no = 2.0f64.sqrt() / 2.0;
+        let n = vector(irr_no, irr_no, 0.0);
+
+        assert_eq!(v.reflect(n).to_5dp(), vector(1.0, 0.0, 0.0));
     }
 }

@@ -1,26 +1,29 @@
+use nalgebra::Matrix4;
 // Previous iterations of matrix.rs (i.e. pre-nalgebra refactoring) can be
 // found in the archive folder. This file only contains tests now.
 
+// Only for tests
+trait Test {
+    fn to_5dp(&self) -> Matrix4<f64>;
+}
+
+impl Test for Matrix4<f64> {
+    fn to_5dp(&self) -> Self {
+        let mut res = Matrix4::zeros();
+        for i in 0..4 {
+            for j in 0..4 {
+                res[(i, j)] = (self[(i, j)] * 100000.0).round() / 100000.0;
+            }
+        }
+        res
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use nalgebra::{Matrix2, Matrix3, Matrix4, Vector4};
+    use super::*;
+    use nalgebra::{Matrix2, Matrix3, Vector4};
     use assert_approx_eq::assert_approx_eq;
-
-    trait Test {
-        fn to_5dp(&self) -> Matrix4<f64>;
-    }
-    
-    impl Test for Matrix4<f64> {
-        fn to_5dp(&self) -> Self {
-            let mut res = Matrix4::zeros();
-            for i in 0..4 {
-                for j in 0..4 {
-                    res[(i, j)] = (self[(i, j)] * 100000.0).round() / 100000.0;
-                }
-            }
-            res
-        }
-    }
 
     #[test]
     fn create_2x2_matrix() {

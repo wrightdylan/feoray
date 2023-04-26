@@ -153,13 +153,11 @@ dependencies = [
 
 [[package]]
 name = "feoray"
-version = "0.0.8"
+version = "0.0.9"
 dependencies = [
- "approx",
  "assert_approx_eq",
  "image",
  "nalgebra",
- "num-traits",
 ]
 
 [[package]]

@@ -6,6 +6,10 @@ Code is based on pseudocode provided in the book: "The Ray Tracer Challenge" by 
 
 **WARNING:** This project is still an early work in progress, so will be unuseable in its current state.
 
+## First Light
+
+![First light](archive/first_light.jpg)
+
 ## Installation
 
 Build the binary with the command:

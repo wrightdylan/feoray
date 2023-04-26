@@ -1,5 +1,18 @@
 # Change Log
 
+## [0.0.9] - 2023-04-26
+
+## Added
+- Surface normals for spheres.
+- Rounding methods for tuple and colour testing.
+- Reflections.
+- Point lights.
+- Basic materials.
+- Phong shading.
+
+## Changed
+- Rounding method for matrix testing now made public.
+
 ## [0.0.8] - 2023-04-25
 
 ## Added

@@ -1,10 +1,11 @@
-use nalgebra::Matrix4;
-use crate::{Intersections, Primitive, Ray, Sphere};
+use nalgebra::{Matrix4, Vector4};
+use crate::{Intersections, Material, Primitive, Ray, Sphere};
 
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct Object {
     pub shape: Primitive,
+    pub material: Material,
     pub transform: Matrix4<f64>,
     pub inverse_transform: Matrix4<f64>
 }
@@ -21,6 +22,12 @@ impl Object {
         }
     }
 
+    pub fn normal_at(&self, object_point: Vector4<f64>) -> Vector4<f64> {
+        match self.shape {
+            Primitive::Sphere() => Sphere::normal_at(object_point, self)
+        }
+    }
+
     pub fn with_transform(&mut self, transform: Matrix4<f64>) -> Self {
         self.transform = transform;
         self.inverse_transform = transform.try_inverse().unwrap();
@@ -34,6 +41,7 @@ impl Default for Object {
     fn default() -> Self {
         Object {
             shape: Primitive::Sphere(),
+            material: Material::default(),
             transform: Matrix4::identity(),
             inverse_transform: Matrix4::identity()
         }

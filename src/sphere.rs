@@ -1,5 +1,4 @@
-// use std::cmp::Ordering;
-// use nalgebra::Vector4;
+use nalgebra::Vector4;
 
 use crate::{Ray, Intersection, Intersections, Object, point};
 
@@ -7,10 +6,6 @@ use crate::{Ray, Intersection, Intersections, Object, point};
 // identity matrix anyway.
 #[derive(Debug, Clone, Copy)]
 pub struct Sphere;
-/*pub struct Sphere {
-    pub centre: Vector4<f64>,
-    pub radius: f64
-}*/
 
 impl Sphere {
     pub fn new() -> Self {
@@ -18,7 +13,6 @@ impl Sphere {
     }
 
     pub fn intersect(ray: Ray, object: &Object) -> Intersections {
-        // let rosc = ray.origin - self.centre;
         let local_ray = Ray {
             origin: object.inverse_transform * ray.origin,
             direction: object.inverse_transform * ray.direction
@@ -26,7 +20,6 @@ impl Sphere {
         let rosc = local_ray.origin - point(0.0, 0.0, 0.0);
         let a = local_ray.direction.dot(&local_ray.direction);
         let b = 2.0 * rosc.dot(&local_ray.direction);
-        // let c = rosc.dot(&rosc) - self.radius * self.radius;
         let c = rosc.dot(&rosc) - 1.0;
         let d = b * b - 4.0 * a * c;
         if d < 0.0 {
@@ -48,37 +41,26 @@ impl Sphere {
             Intersections::new(intrsc)
         }
     }
-}
 
-/*impl Default for Sphere {
-    fn default() -> Self {
-        centre: point(0.0, 0.0, 0.0),
-        radius:1.0
-    }
-}*/
-
-/*impl PartialEq for Sphere {
-    fn eq(&self, other: &Self) -> bool {
-        self.centre == other.centre && self.radius == other.radius
+    pub fn normal_at(object_point: Vector4<f64>, object: &Object) -> Vector4<f64> {
+        let object_normal = (object.inverse_transform * object_point) - point(0.0, 0.0, 0.0);
+        let mut world_normal = object.inverse_transform.transpose() * object_normal;
+        world_normal.w = 0.0;
+        world_normal.normalize_mut();
+        Vector4::new(world_normal.x, world_normal.y, world_normal.z, 0.0)
     }
 }
-
-impl PartialOrd for Sphere {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.radius.partial_cmp(&other.radius).unwrap())
-    }
-}*/
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{vector, Transform};
+    use crate::{vector, Material, Transform, Tuple};
     use nalgebra::Matrix4;
+    use std::f64::consts::PI;
 
     #[test]
     fn ray_intersects_sphere_2points() {
         let r = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
-        // let s = Sphere::default();
         let s = Object::new_sphere();
         let xs = s.intersect(r);
 
@@ -90,7 +72,6 @@ mod tests {
     #[test]
     fn ray_intersects_sphere_at_tangent() {
         let r = Ray::new(point(0.0, 1.0, -5.0), vector(0.0, 0.0, 1.0));
-        // let s = Sphere::default();
         let s = Object::new_sphere();
         let xs = s.intersect(r);
 
@@ -102,7 +83,6 @@ mod tests {
     #[test]
     fn ray_misses_sphere() {
         let r = Ray::new(point(0.0, 2.0, -5.0), vector(0.0, 0.0, 1.0));
-        // let s = Sphere::default();
         let s = Object::new_sphere();
         let xs = s.intersect(r);
 
@@ -112,7 +92,6 @@ mod tests {
     #[test]
     fn ray_originates_inside_sphere() {
         let r = Ray::new(point(0.0, 0.0, 0.0), vector(0.0, 0.0, 1.0));
-        // let s = Sphere::default();
         let s = Object::new_sphere();
         let xs = s.intersect(r);
 
@@ -127,7 +106,6 @@ mod tests {
             point(0.0, 0.0, 5.0),
             vector(0.0, 0.0, 1.0)
         );
-        // let s = Sphere::default();
         let s = Object::new_sphere();
         let xs = s.intersect(r);
 
@@ -163,5 +141,87 @@ mod tests {
         let xs = s.intersect(r);
 
         assert_eq!(xs.len(), 0);
+    }
+
+    #[test]
+    fn normal_on_sphere_at_point_on_x_axis() {
+        let s = Object::new_sphere();
+        let n = s.normal_at(point(1.0, 0.0, 0.0));
+
+        assert_eq!(n, vector(1.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn normal_on_sphere_at_point_on_y_axis() {
+        let s = Object::new_sphere();
+        let n = s.normal_at(point(0.0, 1.0, 0.0));
+
+        assert_eq!(n, vector(0.0, 1.0, 0.0));
+    }
+
+    #[test]
+    fn normal_on_sphere_at_point_on_z_axis() {
+        let s = Object::new_sphere();
+        let n = s.normal_at(point(0.0, 0.0, 1.0));
+
+        assert_eq!(n, vector(0.0, 0.0, 1.0));
+    }
+
+    #[test]
+    fn normal_on_sphere_at_nonaxial_point() {
+        let s = Object::new_sphere();
+        let irr_no = 3.0f64.sqrt() / 3.0;
+        let n = s.normal_at(point(irr_no, irr_no, irr_no));
+
+        assert_eq!(n, vector(irr_no, irr_no, irr_no));
+    }
+
+    #[test]
+    fn normal_is_normalised_vector() {
+        let s = Object::new_sphere();
+        let irr_no = 3.0f64.sqrt() / 3.0;
+        let n = s.normal_at(point(irr_no, irr_no, irr_no));
+
+        assert_eq!(n, n.normalize());
+    }
+
+    #[test]
+    fn computing_normal_on_translated_sphere() {
+        let mut s = Object::new_sphere();
+        s.with_transform(Matrix4::translate(0.0, 1.0, 0.0));
+        let n = s.normal_at(point(0.0, 1.70711, -0.70711));
+
+        assert_eq!(n.to_5dp(), vector(0.0, 0.70711, -0.70711));
+    }
+
+    #[test]
+    fn computing_normal_on_transformed_sphere() {
+        let mut s = Object::new_sphere();
+        s.with_transform(
+            Matrix4::nuscale(1.0, 0.5, 1.0) *
+            Matrix4::rot_z(PI/5.0)
+        );
+        let irr_no = 2.0f64.sqrt() / 2.0;
+        let n = s.normal_at(point(0.0, irr_no, -irr_no));
+
+        assert_eq!(n.to_5dp(), vector(0.0, 0.97014, -0.24254));
+    }
+
+    #[test]
+    fn sphere_has_default_material() {
+        let s = Object::new_sphere();
+        let m = s.material;
+
+        assert_eq!(m, Material::default());
+    }
+
+    #[test]
+    fn sphere_may_be_assigned_material() {
+        let mut s = Object::new_sphere();
+        let mut m = Material::default();
+        m.ambient = 1.0;
+        s.material = m;
+
+        assert_eq!(s.material, m);
     }
 }

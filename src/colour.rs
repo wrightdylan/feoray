@@ -1,7 +1,7 @@
 #![allow(unused)]
 use std::ops::{Add, Mul, Sub};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialOrd)]
 pub struct Colour {
     pub r: f32,
     pub g: f32,
@@ -81,6 +81,14 @@ impl Colour {
     pub fn black() -> Self {
         Colour { r: 0.0, g: 0.0, b: 0.0 }
     }
+
+    /// Rounds a Colour to 5dp. Only useful for tests.
+    pub fn to_5dp(&self) -> Self {
+        let r = (self.r * 100000.0).round() / 100000.0;
+        let g = (self.g * 100000.0).round() / 100000.0;
+        let b = (self.b * 100000.0).round() / 100000.0;
+        Colour { r, g, b }
+    }
 }
 
 impl Add for Colour {
@@ -127,6 +135,18 @@ impl Mul<f32> for Colour {
             r: self.r * rhs,
             g: self.g * rhs,
             b: self.b * rhs
+        }
+    }
+}
+
+impl Mul<f64> for Colour {
+    type Output = Colour;
+
+    fn mul(self, rhs: f64) -> Self::Output {
+        Colour {
+            r: self.r * rhs as f32,
+            g: self.g * rhs as f32,
+            b: self.b * rhs as f32
         }
     }
 }
