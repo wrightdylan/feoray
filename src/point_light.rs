@@ -4,7 +4,7 @@ use crate::Colour;
 
 // I use the term colour as that makes more sense than intensity which sounds
 // more like a scale of colour.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct PointLight {
     pub colour: Colour,
     pub position: Vector4<f64>

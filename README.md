@@ -6,9 +6,12 @@ Code is based on pseudocode provided in the book: "The Ray Tracer Challenge" by 
 
 **WARNING:** This project is still an early work in progress, so will be unuseable in its current state.
 
-## First Light
+## Latest Test Render
 
-![First light](archive/first_light.jpg)
+![Latest test render](archive/first_scene.jpg)
+
+## What's coming next?
+- Shadows!
 
 ## Installation
 
@@ -18,6 +21,10 @@ cargo build --release
 ```
 
 Binary is located in `target/release`.
+
+## First Light
+
+![First light](archive/first_light.jpg)
 
 ## Change Log
 

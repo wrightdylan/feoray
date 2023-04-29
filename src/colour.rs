@@ -1,5 +1,5 @@
 #![allow(unused)]
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Mul, Sub, AddAssign};
 
 #[derive(Debug, Clone, Copy, PartialOrd)]
 pub struct Colour {
@@ -82,6 +82,11 @@ impl Colour {
         Colour { r: 0.0, g: 0.0, b: 0.0 }
     }
 
+    /// Greyscale colour as a fractional percentage
+    pub fn grey(s: f32) -> Self {
+        Colour { r: s, g: s, b: s }
+    }
+
     /// Rounds a Colour to 5dp. Only useful for tests.
     pub fn to_5dp(&self) -> Self {
         let r = (self.r * 100000.0).round() / 100000.0;
@@ -100,6 +105,14 @@ impl Add for Colour {
             g: self.g + rhs.g,
             b: self.b + rhs.b
         }
+    }
+}
+
+impl AddAssign for Colour {
+    fn add_assign(&mut self, rhs: Self) {
+        self.r += rhs.r;
+        self.g += rhs.g;
+        self.b += rhs.b;
     }
 }
 

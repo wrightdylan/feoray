@@ -1,10 +1,13 @@
 // More than meets the eye
-use nalgebra::{Matrix4, Vector3};
+use crate::Tuple;
+use nalgebra::{Matrix4, Vector3, Vector4};
 
 // Previous iterations of transformers.rs (i.e. pre-nalgebra refactoring) can be
 // found in the archive folder. This version mostly adapts native nalgebra functionality
 // to fit previous version.
 
+// Original, direct application of transforms. Now deprecated for complex transforms.
+// Do not use from v0.0.10 onwrds, except for single transforms or view_transform.
 pub trait Transform {
     fn translate(x: f64, y: f64, z: f64) -> Matrix4<f64>;
     fn nuscale(x: f64, y: f64, z: f64) -> Matrix4<f64>;
@@ -13,8 +16,11 @@ pub trait Transform {
     fn rot_y(rad: f64) -> Matrix4<f64>;
     fn rot_z(rad: f64) -> Matrix4<f64>;
     fn shear(xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> Matrix4<f64>;
+    fn view_transform(from: Vector4<f64>, to: Vector4<f64>, up: Vector4<f64>) -> Matrix4<f64>;
 }
 
+// Original, direct application of transforms. Now deprecated for complex transforms.
+// Do not use from v0.0.10 onwrds, except for single transforms or view_transform.
 impl Transform for Matrix4<f64> {
     fn translate(x: f64, y: f64, z: f64) -> Matrix4<f64> {
         Matrix4::new_translation(&Vector3::new(x, y, z))
@@ -50,14 +56,124 @@ impl Transform for Matrix4<f64> {
         shm.m32 = zy;
         shm
     }
+
+    /// Transform for the camera.
+    fn view_transform(from: Vector4<f64>, to: Vector4<f64>, up: Vector4<f64>) -> Matrix4<f64> {
+        let forward = (to - from).normalize();
+        let left = forward.xprod(&up.normalize());
+        let true_up = left.xprod(&forward);
+        let orientation = Matrix4::new(
+            left.x, left.y, left.z, 0.0,
+            true_up.x, true_up.y, true_up.z, 0.0,
+            -forward.x, -forward.y, -forward.z, 0.0,
+            0.0, 0.0, 0.0, 1.0
+        );
+        
+        orientation * Matrix4::translate(-from.x, -from.y, -from.z)
+    }
+}
+
+// Defacto standard for chaining transforms.
+pub struct TransformBuilder {
+    pub transforms: Vec<Matrix4<f64>>
+}
+
+// Defacto standard for chaining transforms.
+impl TransformBuilder {
+    /// Create a new complex transform. Multiple methods can be chained, and
+    /// ended with the build() method. For single transforms just use the
+    /// original implementations.
+    /// 
+    /// # Example
+    /// 
+    /// ```ignore
+    /// let t = TransformBuilder::new()
+    ///     .rot_x(PI / 2.0)
+    ///     .nuscale(5.0, 2.0, 5.0)
+    ///     .translate(10.0, 5.0, 7.0)
+    ///     .build();
+    /// ```ignore
+    pub fn new() -> TransformBuilder {
+        TransformBuilder { transforms: Vec::new() }
+    }
+
+    /// Translation transformation.
+    pub fn translate(mut self, x: f64, y: f64, z: f64) -> TransformBuilder {
+        let translation = Matrix4::new_translation(&Vector3::new(x, y, z));
+        self.transforms.push(translation);
+        self
+    }
+
+    /// Non-uniform scale transformation.
+    pub fn nuscale(mut self, x: f64, y: f64, z: f64) -> TransformBuilder {
+        let scaling = Matrix4::new_nonuniform_scaling(&Vector3::new(x, y, z));
+        self.transforms.push(scaling);
+        self
+    }
+
+    /// Uniform scale transformation.
+    pub fn uscale(mut self, s: f64) -> TransformBuilder {
+        let scaling = Matrix4::new_scaling(s);
+        self.transforms.push(scaling);
+        self
+    }
+
+    /// 3-axis rotation transformation.
+    pub fn rot(mut self, rx: f64, ry: f64, rz: f64) -> TransformBuilder {
+        let rotation = Matrix4::new_rotation(Vector3::new(rx, ry, rz));
+        self.transforms.push(rotation);
+        self
+    }
+
+    /// Rotation transformation around the x-axis.
+    pub fn rot_x(mut self, rad: f64) -> TransformBuilder {
+        let rotation = Matrix4::new_rotation(Vector3::new(rad, 0.0, 0.0));
+        self.transforms.push(rotation);
+        self
+    }
+
+    /// Rotation transformation around the y-axis.
+    pub fn rot_y(mut self, rad: f64) -> TransformBuilder {
+        let rotation = Matrix4::new_rotation(Vector3::new(0.0, rad, 0.0));
+        self.transforms.push(rotation);
+        self
+    }
+
+    /// Rotation transformation around the z-axis.
+    pub fn rot_z(mut self, rad: f64) -> TransformBuilder {
+        let rotation = Matrix4::new_rotation(Vector3::new(0.0, 0.0, rad));
+        self.transforms.push(rotation);
+        self
+    }
+
+    /// Shear, aka keystone, transformation.
+    pub fn shear(mut self, xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> TransformBuilder {
+        let mut shm = Matrix4::identity();
+        shm.m12 = xy;
+        shm.m13 = xz;
+        shm.m21 = yx;
+        shm.m23 = yz;
+        shm.m31 = zx;
+        shm.m32 = zy;
+        self.transforms.push(shm);
+        self
+    }
+
+    /// Transform builder. This should always end the chain.
+    pub fn build(self) -> Matrix4<f64> {
+        let mut result = Matrix4::identity();
+        for transform in self.transforms.into_iter().rev() {
+            result *= transform;
+        }
+        result
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::f64::consts::PI;
-
     use super::*;
-    use crate::{point, vector};
+    use crate::{point, vector, Test};
+    use std::f64::consts::PI;
     use assert_approx_eq::assert_approx_eq;
 
     #[test]
@@ -267,6 +383,68 @@ mod tests {
         let c = Matrix4::translate(10.0, 5.0, 7.0);
 
         let t = c * b * a;
+        let r = t * p;
+
+        assert_approx_eq!(r.x, 15.0);
+        assert_approx_eq!(r.y, 0.0);
+        assert_approx_eq!(r.z, 7.0);
+    }
+
+    #[test]
+    fn transformation_matrix_for_default_orientation() {
+        let from = point(0.0, 0.0, 0.0);
+        let to = point(0.0, 0.0, -1.0);
+        let up = vector(0.0, 1.0, 0.0);
+        let t = Matrix4::view_transform(from, to, up);
+
+        assert_eq!(t, Matrix4::identity());
+    }
+
+    #[test]
+    fn transformation_matrix_looking_positive_z() {
+        let from = point(0.0, 0.0, 0.0);
+        let to = point(0.0, 0.0, 1.0);
+        let up = vector(0.0, 1.0, 0.0);
+        let t = Matrix4::view_transform(from, to, up);
+
+        assert_eq!(t, Matrix4::nuscale(-1.0, 1.0, -1.0));
+    }
+
+    #[test]
+    fn view_transformation_moves_the_world() {
+        let from = point(0.0, 0.0, 8.0);
+        let to = point(0.0, 0.0, 0.0);
+        let up = vector(0.0, 1.0, 0.0);
+        let t = Matrix4::view_transform(from, to, up);
+
+        assert_eq!(t, Matrix4::translate(0.0, 0.0, -8.0));
+    }
+
+    #[test]
+    fn arbitrary_view_transformation() {
+        let from = point(1.0, 3.0, 2.0);
+        let to = point(4.0, -2.0, 8.0);
+        let up = vector(1.0, 1.0, 0.0);
+        let t = Matrix4::view_transform(from, to, up);
+        let m = Matrix4::new(
+            -0.50709, 0.50709, 0.67612, -2.36643,
+            0.76772, 0.60609, 0.12122, -2.82843,
+            -0.35857, 0.59761, -0.71714, 0.0,
+            0.0, 0.0, 0.0, 1.0
+        );
+
+        assert_eq!(t.to_5dp(), m);
+    }
+
+    #[test]
+    fn chained_transforms_using_builder() {
+        let p = point(1.0, 0.0, 1.0);
+        let t = TransformBuilder::new()
+            .rot_x(PI / 2.0)
+            .uscale(5.0)
+            .translate(10.0, 5.0, 7.0)
+            .build();
+
         let r = t * p;
 
         assert_approx_eq!(r.x, 15.0);

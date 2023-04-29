@@ -1,5 +1,20 @@
 # Change Log
 
+## [0.0.10] - 2023-04-30
+
+## Added
+- Cameras and views.
+- World construct and scenes.
+- Precomputed colour data.
+- Extra operator for colours, and greyscale preset.
+- Transform builder, which makes setting up complex transforms easier.
+
+## Changed
+- Intersections made publicly accessible.
+
+## Fixed
+- Reintroduced Tuple methods to_point() and to_vector() to resolve 64-bit floating point issues that caused the w-component of Tuples to be off by 1.0e-12 or something crazy like that, which ultimately breaks the renderer.
+
 ## [0.0.9] - 2023-04-26
 
 ## Added

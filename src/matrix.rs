@@ -3,7 +3,7 @@ use nalgebra::Matrix4;
 // found in the archive folder. This file only contains tests now.
 
 // Only for tests
-trait Test {
+pub trait Test {
     fn to_5dp(&self) -> Matrix4<f64>;
 }
 

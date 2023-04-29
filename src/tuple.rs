@@ -10,6 +10,8 @@ pub trait Tuple {
     fn is_vector(&self) -> bool;
     fn reflect(&self, n: Vector4<f64>) -> Vector4<f64>;
     fn to_5dp(&self) -> Vector4<f64>;
+    fn to_point(&self) -> Vector4<f64>;
+    fn to_vector(&self) -> Vector4<f64>;
     fn xprod(&self, rhs: &Vector4<f64>) -> Vector4<f64>;
 }
 
@@ -35,6 +37,16 @@ impl Tuple for Vector4<f64> {
             res[i] = (self[i] * 100000.0).round() / 100000.0;
         }
         res
+    }
+
+    /// Converts or corrects a Tuple struct to a point type
+    fn to_point(&self) -> Self {
+        Vector4::new(self.x, self.y, self.z, 1.0)
+    }
+
+    /// Converts or corrects a Tuple struct to a vector type
+    fn to_vector(&self) -> Self {
+        Vector4::new(self.x, self.y, self.z, 0.0)
     }
 
     // Have to use a modification of my xprod method as nalgebra version will

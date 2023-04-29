@@ -1,39 +1,90 @@
 #![warn(clippy::pedantic)]
 use feoray::*;
+use nalgebra::Matrix4;
+use std::f64::consts::PI;
 
 fn main() {
-    let mut cnvs = canvas(600, 600);
-    let mut s = Object::new_sphere();
-    let mat = Material::default().with_colour(Colour::new(1.0, 0.2, 1.0));
-    s.material = mat;
-    let wall_z = 10.0;
-    let wall_size = 7.0;
-    let ray_origin = point(0.0, 0.0, -5.0);
-    let pixel_size = wall_size / cnvs.width as f64;
-    let wall_half = wall_size / 2.0;
-    let light = PointLight::new(Colour::white(), point(-10.0, 10.0, -10.0));
+    let floor_trn = Matrix4::nuscale(10.0, 0.01, 10.0);
+    let floor_mat = Material::default()
+        .with_colour(Colour::new(1.0, 0.9, 0.9))
+        .with_specular(0.0);
+    let floor = Object::new_sphere()
+        .with_transform(floor_trn)
+        .with_material(floor_mat);
 
-    for y in 0..cnvs.height {
-        let world_y = wall_half - pixel_size * y as f64;
-        for x in 0..cnvs.width {
-            let world_x = -wall_half + pixel_size * x as f64;
-            let position = point(world_x, world_y, wall_z);
-            let r = Ray::new(
-                ray_origin,
-                (position - ray_origin).normalize()
-            );
-            let xs = s.intersect(r);
-            // Well, this works, butit really ought to be using hit()
-            if xs.len() > 0 {
-                let hit = xs.hit().unwrap();
-                let p = r.position(hit.t);
-                let n = hit.object.normal_at(p);
-                let eyev = -r.direction;
-                let clr = hit.object.material.lighting(light, p, eyev, n);
-                cnvs.write_pix(x, y, clr);
-            }
-        }
-    }
+    let left_wall_trn = TransformBuilder::new()
+        .nuscale(10.0, 0.01, 10.0)
+        .rot_x(PI / 2.0)
+        .rot_y(-PI / 4.0)
+        .translate(0.0, 0.0, 5.0)
+        .build();
+    let left_wall_mat = floor_mat.clone();
+    let left_wall = Object::new_sphere()
+        .with_transform(left_wall_trn)
+        .with_material(left_wall_mat);
 
-    cnvs.export("first_light.jpg").unwrap();
+    let right_wall_trn = TransformBuilder::new()
+        .nuscale(10.0, 0.01, 10.0)
+        .rot_x(PI / 2.0)
+        .rot_y(PI / 4.0)
+        .translate(0.0, 0.0, 5.0)
+        .build();
+    let right_wall_mat = floor_mat.clone();
+    let right_wall = Object::new_sphere()
+        .with_transform(right_wall_trn)
+        .with_material(right_wall_mat);
+
+    let mid_trn = Matrix4::translate(-0.5, 1.0, 0.5);
+    let mid_mat = Material::default()
+        .with_colour(Colour::new(0.1, 1.0, 0.5))
+        .with_diffuse(0.7)
+        .with_specular(0.3);
+    let mid = Object::new_sphere()
+        .with_transform(mid_trn)
+        .with_material(mid_mat);
+
+    let right_trn = TransformBuilder::new()
+        .uscale(0.5)
+        .translate(1.5, 0.5, -0.5)
+        .build();
+    let right_mat = Material::default()
+        .with_colour(Colour::new(0.5, 1.0, 0.1))
+        .with_diffuse(0.7)
+        .with_specular(0.3);
+    let right = Object::new_sphere()
+        .with_transform(right_trn)
+        .with_material(right_mat);
+
+    let left_trn = TransformBuilder::new()
+        .uscale(0.33)
+        .translate(-1.5, 0.33, -0.75)
+        .build();
+    let left_mat = Material::default()
+        .with_colour(Colour::new(1.0, 0.8, 0.1))
+        .with_diffuse(0.7)
+        .with_specular(0.3);
+    let left = Object::new_sphere()
+        .with_transform(left_trn)
+        .with_material(left_mat);
+
+    let light_source = PointLight::new(Colour::white(), point(-10.0, 10.0, -10.0));
+
+    let world = World::default()
+        .with_light(light_source)
+        .with_object(floor)
+        .with_object(left_wall)
+        .with_object(right_wall)
+        .with_object(mid)
+        .with_object(left)
+        .with_object(right);
+
+    let from = point(0.0, 1.5, -5.0);
+    let to = point(0.0, 1.0, 0.0);
+    let up = vector(0.0, 1.0, 0.0);
+    let cam = Camera::new(700, 350, PI / 3.0)
+        .with_transform(Matrix4::view_transform(from, to, up));
+
+    let canvas = cam.render(world);
+
+    canvas.export("first_scene.jpg").unwrap();
 }
