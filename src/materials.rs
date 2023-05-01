@@ -63,7 +63,8 @@ impl Material {
         light: PointLight,
         pos: Vector4<f64>,
         eyev: Vector4<f64>,
-        normal: Vector4<f64>
+        normal: Vector4<f64>,
+        shadow: bool
     ) -> Colour {
         let eff_colour = self.colour * light.colour;
         let lightv = (light.position - pos).normalize();
@@ -81,7 +82,8 @@ impl Material {
                 specular = light.colour * self.specular * factor;
             }
         }
-        ambient + diffuse + specular
+        
+        ambient + if shadow {Colour::black()} else {diffuse + specular}
     }
 }
 
@@ -120,7 +122,8 @@ mod tests {
         let eyev = vector(0.0, 0.0, -1.0);
         let normal = vector(0.0, 0.0, -1.0);
         let light = PointLight::new(Colour::white(), point(0.0, 0.0, -10.0));
-        let res = m.lighting(light, pos, eyev, normal);
+        let shadow = false;
+        let res = m.lighting(light, pos, eyev, normal, shadow);
 
         assert_eq!(res, Colour::new(1.9, 1.9, 1.9));
     }
@@ -133,7 +136,7 @@ mod tests {
         let eyev = vector(0.0, irr_no, -irr_no);
         let normal = vector(0.0, 0.0, -1.0);
         let light = PointLight::new(Colour::white(), point(0.0, 0.0, -10.0));
-        let res = m.lighting(light, pos, eyev, normal);
+        let res = m.lighting(light, pos, eyev, normal, false);
 
         assert_eq!(res, Colour::white());
     }
@@ -145,7 +148,7 @@ mod tests {
         let eyev = vector(0.0, 0.0, -1.0);
         let normal = vector(0.0, 0.0, -1.0);
         let light = PointLight::new(Colour::white(), point(0.0, 10.0, -10.0));
-        let res = m.lighting(light, pos, eyev, normal);
+        let res = m.lighting(light, pos, eyev, normal, false);
 
         assert_eq!(res.to_5dp(), Colour::new(0.73640, 0.73640, 0.73640));
     }
@@ -158,7 +161,7 @@ mod tests {
         let eyev = vector(0.0, -irr_no, -irr_no);
         let normal = vector(0.0, 0.0, -1.0);
         let light = PointLight::new(Colour::white(), point(0.0, 10.0, -10.0));
-        let res = m.lighting(light, pos, eyev, normal);
+        let res = m.lighting(light, pos, eyev, normal, false);
 
         assert_eq!(res.to_5dp(), Colour::new(1.63640, 1.63640, 1.63640));
     }
@@ -170,7 +173,19 @@ mod tests {
         let eyev = vector(0.0, 0.0, -1.0);
         let normal = vector(0.0, 0.0, -1.0);
         let light = PointLight::new(Colour::white(), point(0.0, 0.0, 10.0));
-        let res = m.lighting(light, pos, eyev, normal);
+        let res = m.lighting(light, pos, eyev, normal, false);
+
+        assert_eq!(res, Colour::new(0.1, 0.1, 0.1));
+    }
+
+    #[test]
+    fn lighting_with_surface_in_shadow() {
+        let m = Material::default();
+        let pos = point(0.0, 0.0, 0.0);
+        let eyev = vector(0.0, 0.0, -1.0);
+        let normal = vector(0.0, 0.0, -1.0);
+        let light = PointLight::new(Colour::white(), point(0.0, 0.0, -10.0));
+        let res = m.lighting(light, pos, eyev, normal, true);
 
         assert_eq!(res, Colour::new(0.1, 0.1, 0.1));
     }

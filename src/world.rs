@@ -1,5 +1,5 @@
 use crate::{point, Colour, Intersections, Material, Object, PointLight, PreCompData, Ray, Transform};
-use nalgebra::Matrix4;
+use nalgebra::{Matrix4, Vector4};
 
 #[derive(Debug, PartialEq)]
 pub struct World {
@@ -50,6 +50,21 @@ impl World {
         Intersections { intrsc: intersections }
     }
 
+    /// Determines if the point is occulted. Must be calculated for each light source.
+    pub fn is_shadowed(&self, light_pos: Vector4<f64>, point: Vector4<f64>) -> bool {
+        let v = light_pos - point;
+        let distance = v.magnitude();
+        let direction = v.normalize();
+        let ray = Ray::new(point, direction);
+        let intersections = self.intersect(ray);
+        let h = intersections.hit();
+        if h != None && h.unwrap().t < distance {
+            true
+        } else {
+            false
+        }
+    }
+
     /// Calculates colour of hit. Support multiple lights right out of the box!
     pub fn shade_hit(&self, comps: PreCompData) -> Colour {
         let mut res = Colour::black();
@@ -58,7 +73,8 @@ impl World {
                 self.lights[i],
                 comps.pos,
                 comps.eyev,
-                comps.normal
+                comps.normal,
+                self.is_shadowed(self.lights[i].position, comps.over_pos)
             );
         }
         res
@@ -176,7 +192,7 @@ mod tests {
 
     #[test]
     fn colour_with_intersection_behind_ray() {
-        let mut w = World::default_world();
+        let mut w: World = World::default_world();
         let mut inner = w.objects[1];
         inner.material.ambient = 1.0;
         w.objects[0].material.ambient = 1.0;
@@ -185,5 +201,55 @@ mod tests {
         let clr = w.colour_at(r);
 
         assert_eq!(clr, inner.material.colour);
+    }
+
+    #[test]
+    fn no_shadow_when_nothing_collinear_with_point_and_light() {
+        let w = World::default_world();
+        let p = point(0.0, 10.0, 0.0);
+
+        assert!(!w.is_shadowed(w.lights[0].position, p));
+    }
+
+    #[test]
+    fn shadow_when_object_between_point_and_light() {
+        let w = World::default_world();
+        let p = point(10.0, -10.0, 10.0);
+
+        assert!(w.is_shadowed(w.lights[0].position, p));
+    }
+
+    #[test]
+    fn no_shadow_when_object_behind_light() {
+        let w = World::default_world();
+        let p = point(-20.0, 20.0, -20.0);
+
+        assert!(!w.is_shadowed(w.lights[0].position, p));
+    }
+
+    #[test]
+    fn no_shadow_when_object_behind_point() {
+        let w = World::default_world();
+        let p = point(-2.0, 2.0, -2.0);
+
+        assert!(!w.is_shadowed(w.lights[0].position, p));
+    }
+
+    #[test]
+    fn shade_hit_is_given_intersection_in_shadow() {
+        let light = PointLight::new(Colour::white(), point(0.0, 0.0, -10.0));
+        let s1 = Object::new_sphere();
+        let s2 = Object::new_sphere()
+            .with_transform(Matrix4::translate(0.0, 0.0, 10.0));
+        let w = World::default()
+            .with_light(light)
+            .with_object(s1)
+            .with_object(s2);
+        let r = Ray::new(point(0.0, 0.0, 5.0), vector(0.0, 0.0, 1.0));
+        let i = Intersection::new(4.0, s2);
+        let comps = i.prepare_computations(r);
+        let c = w.shade_hit(comps);
+
+        assert_eq!(c, Colour::grey(0.1));
     }
 }

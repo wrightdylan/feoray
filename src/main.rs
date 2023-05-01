@@ -67,10 +67,16 @@ fn main() {
         .with_transform(left_trn)
         .with_material(left_mat);
 
-    let light_source = PointLight::new(Colour::white(), point(-10.0, 10.0, -10.0));
+    let light1 = PointLight::new(Colour::grey(0.25), point(-11.0, 11.0, -10.0));
+    let light2 = PointLight::new(Colour::grey(0.25), point(-9.0, 11.0, -10.0));
+    let light3 = PointLight::new(Colour::grey(0.25), point(-11.0, 9.0, -10.0));
+    let light4 = PointLight::new(Colour::grey(0.25), point(-9.0, 9.0, -10.0));
 
     let world = World::default()
-        .with_light(light_source)
+        .with_light(light1)
+        .with_light(light2)
+        .with_light(light3)
+        .with_light(light4)
         .with_object(floor)
         .with_object(left_wall)
         .with_object(right_wall)
@@ -86,5 +92,5 @@ fn main() {
 
     let canvas = cam.render(world);
 
-    canvas.export("first_scene.jpg").unwrap();
+    canvas.export("scene_shadows.jpg").unwrap();
 }

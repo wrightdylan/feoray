@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.0.11] - 2023-05-02
+
+## Added
+- Cast shadows. This will be upgraded to ambient occlusion in time.
+
 ## [0.0.10] - 2023-04-30
 
 ## Added

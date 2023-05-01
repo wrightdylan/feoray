@@ -43,20 +43,22 @@ impl Intersection {
     }
 
     pub fn prepare_computations(&self, ray: Ray) -> PreCompData {
-        let point = ray.position(self.t);
+        let pos = ray.position(self.t);
         let eyev = -ray.direction;
-        let mut normal = self.object.normal_at(point);
+        let mut normal = self.object.normal_at(pos);
         let inside = if normal.dot(&eyev) < 0.0 {
             normal = -normal;
             true
         } else {
             false
         };
+        let over_pos = pos + normal * EPSILON;
 
         PreCompData::new(
             self.t,
             self.object,
-            point,
+            pos,
+            over_pos,
             eyev,
             normal,
             inside
@@ -96,7 +98,8 @@ impl Index<usize> for Intersections {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{point, vector, Ray};
+    use crate::{point, vector, Ray, Transform};
+    use nalgebra::*;
 
     #[test]
     fn intersection_encapsulates_t_and_object() {
@@ -213,5 +216,17 @@ mod tests {
         assert_eq!(comps.eyev, vector(0.0, 0.0, -1.0));
         assert_eq!(comps.inside, true);
         assert_eq!(comps.normal, vector(0.0, 0.0, -1.0));
+    }
+
+    #[test]
+    fn hit_should_offset_the_point() {
+        let r = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
+        let s = Object::new_sphere()
+            .with_transform(Matrix4::translate(0.0, 0.0, 1.0));
+        let i = Intersection::new(5.0, s);
+        let comps = i.prepare_computations(r);
+
+        assert!(comps.over_pos.z < -EPSILON / 2.0);
+        assert!(comps.pos.z > comps.over_pos.z);
     }
 }
