@@ -8,11 +8,11 @@ Code is based on pseudocode provided in the book: "The Ray Tracer Challenge" by 
 
 ## Latest Test Render
 
-![Latest test render](archive/scene_shadows.jpg)
-Test scene with added support or shadows. Note the multiple shadows cast from multiple (four) light sources.
+![Latest test render](archive/test_scene_0003.jpg)
+
 
 ## What's coming next?
-- New primitive: planes!
+- Patterns!
 
 ## Installation
 
@@ -30,6 +30,14 @@ Binary is located in `target/release`.
 ## Change Log
 
 See [CHANGELOG](CHANGELOG.md).
+
+## Features
+- Camera and scenes
+- Primitives: plane, sphere
+
+### Lighting
+- Point lights
+- Multiple lights with individually cast shadows
 
 ## License
 

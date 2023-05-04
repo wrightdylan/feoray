@@ -1,8 +1,7 @@
+use crate::core::Tuple;
 use nalgebra::{Matrix4, Vector4};
 
-use crate::Tuple;
-
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct Ray {
     pub origin: Vector4<f64>,
     pub direction: Vector4<f64>
@@ -27,7 +26,7 @@ impl Ray {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{point, vector, Transform};
+    use crate::core::{point, vector, Transform};
 
     #[test]
     fn create_and_query_ray() {

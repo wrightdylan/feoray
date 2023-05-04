@@ -1,4 +1,4 @@
-use crate::{canvas, point, Canvas, Ray, World};
+use crate::core::{canvas, point, Canvas, Ray, World};
 use nalgebra::Matrix4;
 
 #[derive(Debug, Clone, Copy)]
@@ -75,7 +75,7 @@ impl Camera {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{vector, Colour, Transform, Tuple, World};
+    use crate::core::{vector, Colour, Transform, Tuple, World};
     use std::f64::consts::PI;
 
     #[test]

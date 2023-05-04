@@ -1,5 +1,5 @@
 // More than meets the eye
-use crate::Tuple;
+use crate::core::Tuple;
 use nalgebra::{Matrix4, Vector3, Vector4};
 
 // Previous iterations of transformers.rs (i.e. pre-nalgebra refactoring) can be
@@ -172,7 +172,7 @@ impl TransformBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{point, vector, Test};
+    use crate::core::{point, vector, Test};
     use std::f64::consts::PI;
     use assert_approx_eq::assert_approx_eq;
 

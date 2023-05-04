@@ -1,4 +1,4 @@
-use crate::Object;
+use crate::primitives::Object;
 use nalgebra::Vector4;
 
 #[derive(Debug)]

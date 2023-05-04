@@ -1,4 +1,4 @@
-use crate::Colour;
+use crate::core::Colour;
 use image::{ImageBuffer, ImageResult, Rgb};
 use std::ops::{Index, IndexMut};
 

@@ -1,5 +1,16 @@
 # Change Log
 
+## [0.0.12] - 2023-05-05
+
+## Added
+- Primitive: planes.
+
+## Changed
+- Reorganised file structure due to increasing number of files.
+
+## Fixed
+- Having planes in the scene caused the renderer to crash due to a weird issue with the colour_at() method. The function tested if intersections were greater than 0, and intersections is a vector of hits, so logically if intersections is greater than 0, then there must be a hit. Apparently with planes there can be intersections without hits. How that makes sense I have no idea.
+
 ## [0.0.11] - 2023-05-02
 
 ## Added

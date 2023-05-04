@@ -1,4 +1,5 @@
-use crate::{Colour, PointLight, Tuple};
+use crate::core::{Colour, Tuple};
+use crate::lights::PointLight;
 use nalgebra::Vector4;
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
@@ -102,7 +103,7 @@ impl Default for Material {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{point, vector};
+    use crate::core::{point, vector};
 
     #[test]
     fn default_material() {

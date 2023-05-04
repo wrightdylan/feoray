@@ -1,4 +1,7 @@
-use crate::{point, Colour, Intersections, Material, Object, PointLight, PreCompData, Ray, Transform};
+use crate::core::{point, Colour, Intersections, PreCompData, Ray, Transform};
+use crate::materials::Material;
+use crate::primitives::Object;
+use crate::lights::PointLight;
 use nalgebra::{Matrix4, Vector4};
 
 #[derive(Debug, PartialEq)]
@@ -16,7 +19,7 @@ impl World {
     /// Calculates the colour of a pixel.
     pub fn colour_at(&self, ray: Ray) -> Colour {
         let xs = self.intersect(ray);
-        if xs.len() > 0 {
+        if xs.hit().is_some() {
             self.shade_hit(xs.hit().unwrap().prepare_computations(ray))
         } else {
             Colour::black()
@@ -107,7 +110,7 @@ impl Default for World {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{vector, Intersection};
+    use crate::core::{vector, Intersection};
 
     #[test]
     fn creating_a_world() {

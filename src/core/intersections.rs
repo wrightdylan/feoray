@@ -1,6 +1,8 @@
+use crate::EPSILON;
+use crate::core::{PreCompData, Ray};
+use crate::primitives::Object;
 use std::cmp::Ordering;
 use std::ops::Index;
-use crate::{EPSILON, Object, PreCompData, Ray};
 
 #[derive(Debug, Clone, Copy, PartialOrd)]
 pub struct Intersection {
@@ -98,7 +100,7 @@ impl Index<usize> for Intersections {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{point, vector, Ray, Transform};
+    use crate::core::{point, vector, Ray, Transform};
     use nalgebra::*;
 
     #[test]

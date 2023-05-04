@@ -1,6 +1,6 @@
+use crate::core::{point, Intersection, Intersections, Ray};
+use crate::primitives::Object;
 use nalgebra::Vector4;
-
-use crate::{Ray, Intersection, Intersections, Object, point};
 
 // Original struct no longer needed as centre and radius is defined by the
 // identity matrix anyway.
@@ -54,7 +54,8 @@ impl Sphere {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{vector, Material, Transform, Tuple};
+    use crate::core::{vector, Transform, Tuple};
+    use crate::materials::Material;
     use nalgebra::Matrix4;
     use std::f64::consts::PI;
 
@@ -124,7 +125,6 @@ mod tests {
         s.with_transform(Matrix4::uscale(2.0));
         let xs = s.intersect(r);
 
-        println!("{}, {}", xs[0].t, xs[1].t);
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, 3.0);
         assert_eq!(xs[1].t, 7.0);

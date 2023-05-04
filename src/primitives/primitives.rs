@@ -1,4 +1,8 @@
+use super::TestShape;
+
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub enum Primitive {
-    Sphere()
+    Plane(),
+    Sphere(),
+    TestShape(TestShape)
 }

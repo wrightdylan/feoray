@@ -1,6 +1,5 @@
+use crate::core::Colour;
 use nalgebra::Vector4;
-
-use crate::Colour;
 
 // I use the term colour as that makes more sense than intensity which sounds
 // more like a scale of colour.
@@ -19,7 +18,7 @@ impl PointLight {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::point;
+    use crate::core::point;
 
     #[test]
     fn point_light_has_position_and_intensity() {

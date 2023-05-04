@@ -1,5 +1,7 @@
+use crate::core::{Intersections, Ray};
+use crate::materials::Material;
+use crate::primitives::{Plane, Primitive, Sphere, TestShape};
 use nalgebra::{Matrix4, Vector4};
-use crate::{Intersections, Material, Primitive, Ray, Sphere};
 
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
@@ -11,23 +13,39 @@ pub struct Object {
 }
 
 impl Object {
+    /// Creates a new plane at 0.0, 0.0, 0.0.
+    pub fn new_plane() -> Self {
+        let shape = Primitive::Plane();
+        Object { shape, ..Default::default() }
+    }
+
     /// Creates a new sphere at 0.0, 0.0, 0.0 with radius 1.0.
     pub fn new_sphere() -> Self {
         let shape = Primitive::Sphere();
         Object { shape, ..Default::default() }
     }
 
+    /// Creates a new test shape at 0.0, 0.0, 0.0.
+    pub fn new_test_shape() -> Self {
+        let shape = Primitive::TestShape(TestShape::new());
+        Object { shape, ..Default::default() }
+    }
+
     /// Calculates intersections between a ray and an object, if any.
     pub fn intersect(&self, ray: Ray) -> Intersections {
         match self.shape {
-            Primitive::Sphere() => Sphere::intersect(ray, self)
+            Primitive::Plane() => Plane::intersect(ray, self),
+            Primitive::Sphere() => Sphere::intersect(ray, self),
+            Primitive::TestShape(mut t) => t.intersect(ray, self)
         }
     }
 
     /// Calculates the normal at a specified point on an object.
     pub fn normal_at(&self, object_point: Vector4<f64>) -> Vector4<f64> {
         match self.shape {
-            Primitive::Sphere() => Sphere::normal_at(object_point, self)
+            Primitive::Plane() => Plane::normal_at(object_point, self),
+            Primitive::Sphere() => Sphere::normal_at(object_point, self),
+            Primitive::TestShape(t) => t.normal_at(object_point, self)
         }
     }
 
@@ -63,7 +81,7 @@ impl Default for Object {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Transform;
+    use crate::core::Transform;
 
     #[test]
     fn a_spheres_default_transformation() {
@@ -73,11 +91,26 @@ mod tests {
     }
     
     #[test]
-    fn changing_a_spheres_transform1() {
+    fn changing_a_spheres_transform() {
         let mut s = Object::new_sphere();
         let t = Matrix4::translate(2.0, 3.0, 4.0);
         s.with_transform(t);
 
         assert_eq!(s.transform, t);
+    }
+
+    #[test]
+    fn the_default_transformation() {
+        let s = Object::new_test_shape();
+
+        assert_eq!(s.transform, Matrix4::identity());
+    }
+
+    #[test]
+    fn assigning_a_transformation() {
+        let s = Object::new_test_shape()
+            .with_transform(Matrix4::translate(2.0, 3.0, 4.0));
+
+        assert_eq!(s.transform, Matrix4::translate(2.0, 3.0, 4.0));
     }
 }
