@@ -73,6 +73,7 @@ impl World {
         let mut res = Colour::black();
         for i in 0..self.lights.len() {
             res += comps.object.material.lighting(
+                comps.object,
                 self.lights[i],
                 comps.pos,
                 comps.eyev,
@@ -203,7 +204,7 @@ mod tests {
         let r = Ray::new(point(0.0, 0.0, 0.75), vector(0.0, 0.0, -1.0));
         let clr = w.colour_at(r);
 
-        assert_eq!(clr, inner.material.colour);
+        assert_eq!(clr, inner.material.pattern.pattern_at_object(inner, point(0.0, 0.0, 0.0)));
     }
 
     #[test]

@@ -24,10 +24,18 @@ pub mod core {
     pub mod world;
 }
 
+pub mod lights {
+    pub use point_light::PointLight;
+
+    pub mod point_light;
+}
+
 pub mod materials {
     pub use materials::Material;
+    pub use patterns::*;
 
     pub mod materials;
+    pub mod patterns;
 }
 
 pub mod primitives {
@@ -42,10 +50,4 @@ pub mod primitives {
     pub mod plane;
     pub mod sphere;
     pub mod test_shape;
-}
-
-pub mod lights {
-    pub use point_light::PointLight;
-
-    pub mod point_light;
 }

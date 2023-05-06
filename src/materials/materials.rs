@@ -1,73 +1,89 @@
+use super::Pattern;
 use crate::core::{Colour, Tuple};
 use crate::lights::PointLight;
+use crate::primitives::Object;
 use nalgebra::Vector4;
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct Material {
-    pub colour: Colour,
     pub ambient: f32,
     pub diffuse: f32,
     pub specular: f32,
-    pub smoothness: f32 // Called shininess in the book
+    pub smoothness: f32,
+    pub pattern: Pattern
 }
 // Look to add transmission, ior, and metallic in the future
 
 impl Material {
     pub fn new(
-        colour: Colour,
         ambient: f32,
         diffuse: f32,
         specular: f32,
-        smoothness: f32
+        smoothness: f32,
+        pattern: Pattern
     ) -> Self {
         Material {
-            colour,
             ambient,
             diffuse,
             specular,
-            smoothness
+            smoothness,
+            pattern
         }
     }
 
-    pub fn with_colour(mut self, colour: Colour) -> Material {
-        self.colour = colour;
+    /// Assigns solid colour to material
+    pub fn with_colour(mut self, colour: Colour) -> Self {
+        self.pattern = Pattern::new_solid(colour);
 
         self
     }
 
+    /// Assigns ambient value
     pub fn with_ambient(mut self, ambient: f32) -> Self {
         self.ambient = ambient;
 
         self
     }
 
+    /// Assigns diffuse value
     pub fn with_diffuse(mut self, diffuse: f32) -> Self {
         self.diffuse = diffuse;
 
         self
     }
 
+    /// Assigns specularity
     pub fn with_specular(mut self, specular: f32) -> Self {
         self.specular = specular;
 
         self
     }
 
+    /// Assigns smoothness (aka shininess)
     pub fn with_smoothness(mut self, smoothness: f32) -> Self {
         self.smoothness = smoothness;
 
         self
     }
 
+    /// Applies a pattern (including solid colour)
+    pub fn with_pattern(mut self, pattern: Pattern) -> Self {
+        self.pattern = pattern;
+
+        self
+    }
+
     pub fn lighting(
         &self,
+        object: Object,
         light: PointLight,
         pos: Vector4<f64>,
         eyev: Vector4<f64>,
         normal: Vector4<f64>,
         shadow: bool
     ) -> Colour {
-        let eff_colour = self.colour * light.colour;
+        let colour = self.pattern.pattern_at_object(object, pos);
+        let eff_colour = colour * light.colour;
         let lightv = (light.position - pos).normalize();
         let ambient = eff_colour * self.ambient;
         let light_dot_normal = lightv.dot(&normal);
@@ -91,11 +107,11 @@ impl Material {
 impl Default for Material {
     fn default() -> Self {
         Material {
-            colour: Colour::white(),
             ambient: 0.1,
             diffuse: 0.9,
             specular: 0.9,
-            smoothness: 200.0
+            smoothness: 200.0,
+            pattern: Pattern::new_solid(Colour::white())
         }
     }
 }
@@ -109,7 +125,7 @@ mod tests {
     fn default_material() {
         let m = Material::default();
 
-        assert_eq!(m.colour, Colour::white());
+        assert_eq!(m.pattern.pattern_at_object(Object::default(), point(0.0, 0.0, 0.0)), Colour::white());
         assert_eq!(m.ambient, 0.1);
         assert_eq!(m.diffuse, 0.9);
         assert_eq!(m.specular, 0.9);
@@ -124,7 +140,7 @@ mod tests {
         let normal = vector(0.0, 0.0, -1.0);
         let light = PointLight::new(Colour::white(), point(0.0, 0.0, -10.0));
         let shadow = false;
-        let res = m.lighting(light, pos, eyev, normal, shadow);
+        let res = m.lighting(Object::default(), light, pos, eyev, normal, shadow);
 
         assert_eq!(res, Colour::new(1.9, 1.9, 1.9));
     }
@@ -137,7 +153,7 @@ mod tests {
         let eyev = vector(0.0, irr_no, -irr_no);
         let normal = vector(0.0, 0.0, -1.0);
         let light = PointLight::new(Colour::white(), point(0.0, 0.0, -10.0));
-        let res = m.lighting(light, pos, eyev, normal, false);
+        let res = m.lighting(Object::default(), light, pos, eyev, normal, false);
 
         assert_eq!(res, Colour::white());
     }
@@ -149,7 +165,7 @@ mod tests {
         let eyev = vector(0.0, 0.0, -1.0);
         let normal = vector(0.0, 0.0, -1.0);
         let light = PointLight::new(Colour::white(), point(0.0, 10.0, -10.0));
-        let res = m.lighting(light, pos, eyev, normal, false);
+        let res = m.lighting(Object::default(), light, pos, eyev, normal, false);
 
         assert_eq!(res.to_5dp(), Colour::new(0.73640, 0.73640, 0.73640));
     }
@@ -162,7 +178,7 @@ mod tests {
         let eyev = vector(0.0, -irr_no, -irr_no);
         let normal = vector(0.0, 0.0, -1.0);
         let light = PointLight::new(Colour::white(), point(0.0, 10.0, -10.0));
-        let res = m.lighting(light, pos, eyev, normal, false);
+        let res = m.lighting(Object::default(), light, pos, eyev, normal, false);
 
         assert_eq!(res.to_5dp(), Colour::new(1.63640, 1.63640, 1.63640));
     }
@@ -174,7 +190,7 @@ mod tests {
         let eyev = vector(0.0, 0.0, -1.0);
         let normal = vector(0.0, 0.0, -1.0);
         let light = PointLight::new(Colour::white(), point(0.0, 0.0, 10.0));
-        let res = m.lighting(light, pos, eyev, normal, false);
+        let res = m.lighting(Object::default(), light, pos, eyev, normal, false);
 
         assert_eq!(res, Colour::new(0.1, 0.1, 0.1));
     }
@@ -186,8 +202,26 @@ mod tests {
         let eyev = vector(0.0, 0.0, -1.0);
         let normal = vector(0.0, 0.0, -1.0);
         let light = PointLight::new(Colour::white(), point(0.0, 0.0, -10.0));
-        let res = m.lighting(light, pos, eyev, normal, true);
+        let res = m.lighting(Object::default(), light, pos, eyev, normal, true);
 
         assert_eq!(res, Colour::new(0.1, 0.1, 0.1));
+    }
+
+    #[test]
+    fn lightng_with_pattern_applied() {
+        let pattern = Pattern::default();
+        let m = Material::default()
+            .with_ambient(1.0)
+            .with_diffuse(0.0)
+            .with_specular(0.0)
+            .with_pattern(pattern);
+        let eyev = vector(0.0, 0.0, -1.0);
+        let normal = vector(0.0, 0.0, -1.0);
+        let light = PointLight::new(Colour::white(), point(0.9, 0.0, 0.0));
+        let c1 = m.lighting(Object::default(), light, point(0.9, 0.0, 0.0), eyev, normal, true);
+        let c2 = m.lighting(Object::default(), light, point(1.1, 0.0, 0.0), eyev, normal, true);
+
+        assert_eq!(c1, Colour::white());
+        assert_eq!(c2, Colour::black());
     }
 }

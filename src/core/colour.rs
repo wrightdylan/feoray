@@ -54,7 +54,7 @@ impl Colour {
 
     /// Predefined screen colour
     pub fn blue() -> Self {
-        Colour { r: 0.0, g: 0.0, b: 0.1 }
+        Colour { r: 0.0, g: 0.0, b: 1.0 }
     }
 
     /// Predefined screen colour

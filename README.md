@@ -8,11 +8,11 @@ Code is based on pseudocode provided in the book: "The Ray Tracer Challenge" by 
 
 ## Latest Test Render
 
-![Latest test render](archive/test_scene_0003.jpg)
+![Latest test render](archive/test_scene_0004.jpg)
 
 
 ## What's coming next?
-- Patterns!
+- More patterns? Optics?
 
 ## Installation
 
@@ -38,6 +38,11 @@ See [CHANGELOG](CHANGELOG.md).
 ### Lighting
 - Point lights
 - Multiple lights with individually cast shadows
+
+### Materials
+- Solid colours
+- Ambient, diffusion, specular, smoothness
+- Patterns: checkers, gradient, rings, and stripes
 
 ## License
 

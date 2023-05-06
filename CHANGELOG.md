@@ -1,5 +1,16 @@
 # Change Log
 
+## [0.0.13] - 2023-05-06
+
+## Added
+- Materials: basic patterns - checkers, stripes, rings, gradient, solid.
+
+## Changed
+- Refactored materials to remove colour since a solid pattern can do the same thing. Controlling colour via patterns allows for more advanced features down the line like nested and blended patterns.
+
+## Fixed
+- The preset for the colour blue had the blue channel set to 0.1. It has now been corrected to 1.0.
+
 ## [0.0.12] - 2023-05-05
 
 ## Added
