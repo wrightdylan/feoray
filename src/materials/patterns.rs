@@ -1,12 +1,14 @@
 use crate::core::Colour;
 use crate::primitives::Object;
 use nalgebra::{Matrix4, Vector4};
+use noise::{NoiseFn, Perlin};
+use std::f64::consts::PI;
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct Pattern {
     pattern: Patterns,
-    transform: Matrix4<f64>,
-    inverse_transform: Matrix4<f64>
+    pub transform: Matrix4<f64>,
+    pub inverse_transform: Matrix4<f64>
 }
 
 impl Pattern {
@@ -21,7 +23,15 @@ impl Pattern {
     /// Constructs a gradient pattern
     pub fn new_gradient(a: Colour, b: Colour) -> Self {
         Pattern {
-            pattern: Patterns::Gradient(GradientPattern { a, b }),
+            pattern: Patterns::Gradient(GradientPattern { a, b, jitter: None }),
+            ..Default::default()
+        }
+    }
+
+    /// Constructs a radial pattern
+    pub fn new_radial(a: Colour, b: Colour, n: usize ) -> Self {
+        Pattern {
+            pattern: Patterns::Radial(RadialPattern { a, b, n }),
             ..Default::default()
         }
     }
@@ -62,6 +72,7 @@ impl Pattern {
         match &self.pattern {
             Patterns::Checkers(pattern) => pattern.pattern_at(point),
             Patterns::Gradient(pattern) => pattern.pattern_at(point),
+            Patterns::Radial(pattern) => pattern.pattern_at(point),
             Patterns::Rings(pattern) => pattern.pattern_at(point),
             Patterns::Solid(pattern) => pattern.pattern_at(point),
             Patterns::Stripes(pattern) => pattern.pattern_at(point),
@@ -71,7 +82,11 @@ impl Pattern {
 
     pub fn pattern_at_object(&self, object: Object, pos: Vector4<f64>) -> Colour {
         let object_point = object.inverse_transform * pos;
-        let point = self.inverse_transform * object_point;
+        let mut point = self.inverse_transform * object_point;
+
+        if object.uv_manifold {
+            point = object.uv_at(point);
+        }
 
         self.pattern_at(point)
     }
@@ -87,7 +102,7 @@ impl Pattern {
 impl Default for Pattern {
     fn default() -> Self {
         Pattern {
-            pattern: Patterns::Stripes(StripePattern { a: Colour::white(), b: Colour::black() }),
+            pattern: Patterns::Solid(SolidPattern { colour: Colour::white() }),
             transform: Matrix4::identity(),
             inverse_transform: Matrix4::identity()
         }
@@ -98,6 +113,7 @@ impl Default for Pattern {
 enum Patterns {
     Checkers(CheckerPattern),
     Gradient(GradientPattern),
+    Radial(RadialPattern),
     Rings(RingPattern),
     Solid(SolidPattern),
     Stripes(StripePattern),
@@ -123,12 +139,40 @@ impl CheckerPattern {
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct GradientPattern {
     a: Colour,
-    b: Colour
+    b: Colour,
+    jitter: Option<Jitter>
 }
 
 impl GradientPattern {
     fn pattern_at(&self, point: Vector4<f64>) -> Colour {
-        self.a + (self.b - self.a) * (point.x - point.x.floor())
+        let gradient = self.a + (self.b - self.a) * (point.x - point.x.floor());
+        let mut noise_colour = Colour::white();
+        if self.jitter.is_some() {
+            let perlin = Perlin::new(self.jitter.unwrap().seed);
+            let jitter = perlin.get([point.x, point.y, point.z]).abs() as f32;
+            noise_colour = Colour::new(jitter, jitter, jitter) * self.jitter.unwrap().amp as f32;
+        }
+        gradient * noise_colour
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
+pub struct RadialPattern {
+    a: Colour,
+    b: Colour,
+    n: usize
+}
+
+impl RadialPattern {
+    fn pattern_at(&self, point: Vector4<f64>) -> Colour {
+        let angle = point.z.atan2(point.x);
+        let sector_size = PI / (self.n as f64);
+        let sector_number = ((angle + PI)/sector_size).floor() as usize;
+        if sector_number % 2 == 0 {
+            self.a
+        } else {
+            self.b
+        }
     }
 }
 
@@ -183,6 +227,38 @@ impl TestPattern {
         Colour::new(point.x as f32, point.y as f32, point.z as f32)
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
+pub struct Jitter {
+    seed: u32,
+    amp: f64
+}
+
+impl Jitter {
+    pub fn new(seed: u32, amp: f64) -> Self {
+        Self { seed, amp }
+    }
+}
+
+// Can't piggyback off Pattern. Must include it as a Pattern, which gets very messy.
+// It's the same issue as nested patterns.
+/*pub struct BlendedPattern {
+    a: Pattern,
+    b: Pattern
+}
+
+impl BlendedPattern {
+    /// Blend two patterns together. You probably don't want to do more than that.
+    pub fn new(a: Pattern, b: Pattern) -> Self {
+        BlendedPattern { a, b }
+    }
+
+    fn pattern_at(&self, point: Vector4<f64>) -> Colour {
+        let colour_a = self.a.pattern_at(point);
+        let colour_b = self.b.pattern_at(point);
+        (colour_a + colour_b) / 2.0
+    }
+}*/
 
 #[cfg(test)]
 mod tests {

@@ -10,9 +10,11 @@ pub struct Material {
     pub diffuse: f32,
     pub specular: f32,
     pub smoothness: f32,
+    pub reflectivity: f32,
+    pub transparency: f32,
+    pub ior: f32,
     pub pattern: Pattern
 }
-// Look to add transmission, ior, and metallic in the future
 
 impl Material {
     pub fn new(
@@ -20,6 +22,9 @@ impl Material {
         diffuse: f32,
         specular: f32,
         smoothness: f32,
+        reflectivity: f32,
+        transparency: f32,
+        ior: f32,
         pattern: Pattern
     ) -> Self {
         Material {
@@ -27,20 +32,36 @@ impl Material {
             diffuse,
             specular,
             smoothness,
+            reflectivity,
+            transparency,
+            ior,
             pattern
         }
     }
 
-    /// Assigns solid colour to material
-    pub fn with_colour(mut self, colour: Colour) -> Self {
-        self.pattern = Pattern::new_solid(colour);
-
-        self
+    pub fn null() -> Self {
+        Material {
+            ambient: 0.0,
+            diffuse: 0.0,
+            specular: 0.0,
+            smoothness: 255.0,
+            reflectivity: 0.0,
+            transparency: 0.0,
+            ior: 1.0,
+            pattern: Pattern::new_solid(Colour::white())
+        }
     }
 
     /// Assigns ambient value
     pub fn with_ambient(mut self, ambient: f32) -> Self {
         self.ambient = ambient;
+
+        self
+    }
+
+    /// Assigns solid colour to material
+    pub fn with_colour(mut self, colour: Colour) -> Self {
+        self.pattern = Pattern::new_solid(colour);
 
         self
     }
@@ -52,16 +73,9 @@ impl Material {
         self
     }
 
-    /// Assigns specularity
-    pub fn with_specular(mut self, specular: f32) -> Self {
-        self.specular = specular;
-
-        self
-    }
-
-    /// Assigns smoothness (aka shininess)
-    pub fn with_smoothness(mut self, smoothness: f32) -> Self {
-        self.smoothness = smoothness;
+    /// Assigns index of refraction
+    pub fn with_ior(mut self, ior: f32) -> Self {
+        self.ior = ior;
 
         self
     }
@@ -73,25 +87,53 @@ impl Material {
         self
     }
 
+    /// Assigns reflectivity
+    pub fn with_reflectivity(mut self, reflectivity: f32) -> Self {
+        self.reflectivity = reflectivity;
+
+        self
+    }
+
+    /// Assigns smoothness (aka shininess)
+    pub fn with_smoothness(mut self, smoothness: f32) -> Self {
+        self.smoothness = smoothness;
+
+        self
+    }
+
+    /// Assigns specularity
+    pub fn with_specular(mut self, specular: f32) -> Self {
+        self.specular = specular;
+
+        self
+    }
+
+    /// Assigns transparency
+    pub fn with_transparency(mut self, transparency: f32) -> Self {
+        self.transparency = transparency;
+
+        self
+    }
+
     pub fn lighting(
         &self,
         object: Object,
         light: PointLight,
         pos: Vector4<f64>,
-        eyev: Vector4<f64>,
-        normal: Vector4<f64>,
+        eye_vec: Vector4<f64>,
+        normal_vec: Vector4<f64>,
         shadow: bool
     ) -> Colour {
         let colour = self.pattern.pattern_at_object(object, pos);
         let eff_colour = colour * light.colour;
-        let lightv = (light.position - pos).normalize();
+        let light_vec = (light.position - pos).normalize();
         let ambient = eff_colour * self.ambient;
-        let light_dot_normal = lightv.dot(&normal);
+        let light_dot_normal = light_vec.dot(&normal_vec);
         let (mut diffuse, mut specular) = (Colour::black(), Colour::black());
         if light_dot_normal >= 0.0 {
             diffuse = eff_colour * self.diffuse * light_dot_normal;
-            let reflectv = (-lightv).reflect(normal);
-            let reflect_dot_eye = reflectv.dot(&eyev);
+            let reflect_vec = (-light_vec).reflect(normal_vec);
+            let reflect_dot_eye = reflect_vec.dot(&eye_vec);
             if reflect_dot_eye <= 0.0 {
                 specular = Colour::black();
             } else {
@@ -111,6 +153,9 @@ impl Default for Material {
             diffuse: 0.9,
             specular: 0.9,
             smoothness: 200.0,
+            reflectivity: 0.0,
+            transparency: 0.0,
+            ior: 1.0,
             pattern: Pattern::new_solid(Colour::white())
         }
     }
@@ -209,7 +254,7 @@ mod tests {
 
     #[test]
     fn lightng_with_pattern_applied() {
-        let pattern = Pattern::default();
+        let pattern = Pattern::new_stripes(Colour::white(), Colour::black());
         let m = Material::default()
             .with_ambient(1.0)
             .with_diffuse(0.0)
@@ -223,5 +268,20 @@ mod tests {
 
         assert_eq!(c1, Colour::white());
         assert_eq!(c2, Colour::black());
+    }
+
+    #[test]
+    fn reflectivity_for_default_material() {
+        let m = Material::default();
+
+        assert_eq!(m.reflectivity, 0.0);
+    }
+
+    #[test]
+    fn transparency_and_ior_for_default_material() {
+        let m = Material::default();
+
+        assert_eq!(m.transparency, 0.0);
+        assert_eq!(m.ior, 1.0);
     }
 }

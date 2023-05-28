@@ -9,7 +9,9 @@ pub struct Object {
     pub shape: Primitive,
     pub material: Material,
     pub transform: Matrix4<f64>,
-    pub inverse_transform: Matrix4<f64>
+    pub inverse_transform: Matrix4<f64>,
+    pub umbra: bool,
+    pub uv_manifold: bool
 }
 
 impl Object {
@@ -32,7 +34,7 @@ impl Object {
     }
 
     /// Calculates intersections between a ray and an object, if any.
-    pub fn intersect(&self, ray: Ray) -> Intersections {
+    pub fn intersect(&self, ray: &Ray) -> Intersections {
         match self.shape {
             Primitive::Plane() => Plane::intersect(ray, self),
             Primitive::Sphere() => Sphere::intersect(ray, self),
@@ -64,6 +66,39 @@ impl Object {
 
         *self
     }
+
+    /// Removes ability for the object to cast a shadow.
+    pub fn cast_no_shadow(&mut self) -> Self {
+        self.umbra = false;
+
+        *self
+    }
+
+    /// Commands the renderer to use the object's manifold.
+    pub fn use_manifold(&mut self) -> Self {
+        self.uv_manifold = true;
+
+        *self
+    }
+
+    /// Selects the correct manifold for the object and returns UV coordinates.
+    pub fn uv_at(&self, object_point: Vector4<f64>) -> Vector4<f64> {
+        match self.shape {
+            Primitive::Plane() => Plane::uv_manifold(object_point),
+            Primitive::Sphere() => Sphere::uv_manifold(object_point, self.material.pattern.inverse_transform),
+            Primitive::TestShape(t) => t.uv_manifold(object_point)
+        }
+    }
+
+    // Object presets
+    /// Glass orb with transparency 1.0, and ior 1.5.
+    pub fn glass_orb() -> Self {
+        let shape = Primitive::Sphere();
+        let material = Material::null()
+            .with_transparency(1.0)
+            .with_ior(1.5);
+        Object { shape, material, ..Default::default() }
+    }
 }
 
 // Blender has their default cube, we have a default sphere.
@@ -73,7 +108,9 @@ impl Default for Object {
             shape: Primitive::Sphere(),
             material: Material::default(),
             transform: Matrix4::identity(),
-            inverse_transform: Matrix4::identity()
+            inverse_transform: Matrix4::identity(),
+            umbra: true,
+            uv_manifold: false
         }
     }
 }

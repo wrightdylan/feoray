@@ -12,7 +12,7 @@ impl TestShape {
         TestShape { saved_ray: Ray::new(point(0.0, 0.0, 0.0), vector(0.0, 0.0, 1.0)) }
     }
 
-    pub fn intersect(&mut self, ray: Ray, object: &Object) -> Intersections {
+    pub fn intersect(&mut self, ray: &Ray, object: &Object) -> Intersections {
         self.saved_ray = Ray {
             origin: object.inverse_transform * ray.origin,
             direction: object.inverse_transform * ray.direction
@@ -22,6 +22,10 @@ impl TestShape {
 
     pub fn normal_at(&self, object_point: Vector4<f64>, _object: &Object) -> Vector4<f64> {
         point(object_point.x, object_point.y, object_point.z)
+    }
+
+    pub fn uv_manifold(&self, pos: Vector4<f64>) -> Vector4<f64> {
+        pos
     }
 }
 
@@ -56,7 +60,7 @@ mod tests {
         let r = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
         let s = Object::new_test_shape()
             .with_transform(Matrix4::uscale(2.0));
-        let _xs = s.intersect(r);
+        let _xs = s.intersect(&r);
         let mut _sr = Ray::new(point(0.0, 0.0, 0.0), vector(0.0, 0.0, 1.0));
         match s.shape {
             Primitive::TestShape(test_shape) => {

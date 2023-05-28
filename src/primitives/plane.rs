@@ -12,7 +12,7 @@ impl Plane {
         Plane {}
     }
 
-    pub fn intersect(ray: Ray, object: &Object) -> Intersections {
+    pub fn intersect(ray: &Ray, object: &Object) -> Intersections {
         if ray.direction.y.abs() < EPSILON {
             Intersections::default()
         } else {
@@ -23,6 +23,10 @@ impl Plane {
 
     pub fn normal_at(_object_point: Vector4<f64>, _object: &Object) -> Vector4<f64> {
         vector(0.0, 1.0, 0.0)
+    }
+
+    pub fn uv_manifold(pos: Vector4<f64>) -> Vector4<f64> {
+        pos
     }
 }
 
@@ -47,7 +51,7 @@ mod tests {
     fn intersect_with_ray_parallel_to_plane() {
         let p = Object::new_plane();
         let r = Ray::new(point(0.0, 10.0, 0.0), vector(0.0, 0.0, 1.0));
-        let xs = p.intersect(r);
+        let xs = p.intersect(&r);
 
         assert_eq!(xs.intrsc.len(), 0);
     }
@@ -56,7 +60,7 @@ mod tests {
     fn intersect_with_coplanar_ray() {
         let p = Object::new_plane();
         let r = Ray::new(point(0.0, 0.0, 0.0), vector(0.0, 0.0, 1.0));
-        let xs = p.intersect(r);
+        let xs = p.intersect(&r);
 
         assert_eq!(xs.intrsc.len(), 0);
     }
@@ -65,7 +69,7 @@ mod tests {
     fn ray_intersecting_plane_from_above() {
         let p = Object::new_plane();
         let r = Ray::new(point(0.0, 1.0, 0.0), vector(0.0, -1.0, 0.0));
-        let xs = p.intersect(r);
+        let xs = p.intersect(&r);
 
         assert_eq!(xs.intrsc.len(), 1);
         assert_eq!(xs[0].t, 1.0);
@@ -76,7 +80,7 @@ mod tests {
     fn ray_intersecting_plane_from_below() {
         let p = Object::new_plane();
         let r = Ray::new(point(0.0, -1.0, 0.0), vector(0.0, 1.0, 0.0));
-        let xs = p.intersect(r);
+        let xs = p.intersect(&r);
 
         assert_eq!(xs.intrsc.len(), 1);
         assert_eq!(xs[0].t, 1.0);

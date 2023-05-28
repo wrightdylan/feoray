@@ -1,6 +1,7 @@
 use crate::core::{point, Intersection, Intersections, Ray};
 use crate::primitives::Object;
-use nalgebra::Vector4;
+use nalgebra::{Vector4, Matrix4};
+use std::f64::consts::PI;
 
 // Original struct no longer needed as centre and radius is defined by the
 // identity matrix anyway.
@@ -12,7 +13,8 @@ impl Sphere {
         Sphere {}
     }
 
-    pub fn intersect(ray: Ray, object: &Object) -> Intersections {
+    /// Calculates intersections between the object and a ray.
+    pub fn intersect(ray: &Ray, object: &Object) -> Intersections {
         let local_ray = Ray {
             origin: object.inverse_transform * ray.origin,
             direction: object.inverse_transform * ray.direction
@@ -42,12 +44,25 @@ impl Sphere {
         }
     }
 
+    /// Resolves the normal vector at a specified point on an object.
     pub fn normal_at(object_point: Vector4<f64>, object: &Object) -> Vector4<f64> {
         let object_normal = (object.inverse_transform * object_point) - point(0.0, 0.0, 0.0);
         let mut world_normal = object.inverse_transform.transpose() * object_normal;
         world_normal.w = 0.0;
         world_normal.normalize_mut();
         Vector4::new(world_normal.x, world_normal.y, world_normal.z, 0.0)
+    }
+
+    /// Converts spherical surface coordinates to planar coordinates
+    /// Do not use rotation transform on the pattern when using this.
+    /// Rotate the object instead.
+    pub fn uv_manifold(pos: Vector4<f64>, transform: Matrix4<f64>) -> Vector4<f64> {
+        let phi = (pos.x.powi(2) + pos.z.powi(2)).sqrt().atan2(pos.y);
+        let theta = pos.z.atan2(pos.x);
+        let u = (theta / PI) * 2.0;
+        let v = phi * (2.0/PI);
+
+        transform * point(u, 0.0, v)
     }
 }
 
@@ -57,13 +72,12 @@ mod tests {
     use crate::core::{vector, Transform, Tuple};
     use crate::materials::Material;
     use nalgebra::Matrix4;
-    use std::f64::consts::PI;
 
     #[test]
     fn ray_intersects_sphere_2points() {
         let r = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
         let s = Object::new_sphere();
-        let xs = s.intersect(r);
+        let xs = s.intersect(&r);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, 4.0);
@@ -74,7 +88,7 @@ mod tests {
     fn ray_intersects_sphere_at_tangent() {
         let r = Ray::new(point(0.0, 1.0, -5.0), vector(0.0, 0.0, 1.0));
         let s = Object::new_sphere();
-        let xs = s.intersect(r);
+        let xs = s.intersect(&r);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, 5.0);
@@ -85,7 +99,7 @@ mod tests {
     fn ray_misses_sphere() {
         let r = Ray::new(point(0.0, 2.0, -5.0), vector(0.0, 0.0, 1.0));
         let s = Object::new_sphere();
-        let xs = s.intersect(r);
+        let xs = s.intersect(&r);
 
         assert_eq!(xs.len(), 0);
     }
@@ -94,7 +108,7 @@ mod tests {
     fn ray_originates_inside_sphere() {
         let r = Ray::new(point(0.0, 0.0, 0.0), vector(0.0, 0.0, 1.0));
         let s = Object::new_sphere();
-        let xs = s.intersect(r);
+        let xs = s.intersect(&r);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, -1.0);
@@ -108,7 +122,7 @@ mod tests {
             vector(0.0, 0.0, 1.0)
         );
         let s = Object::new_sphere();
-        let xs = s.intersect(r);
+        let xs = s.intersect(&r);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, -6.0);
@@ -123,7 +137,7 @@ mod tests {
         );
         let mut s = Object::new_sphere();
         s.with_transform(Matrix4::uscale(2.0));
-        let xs = s.intersect(r);
+        let xs = s.intersect(&r);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, 3.0);
@@ -138,7 +152,7 @@ mod tests {
         );
         let mut s = Object::new_sphere();
         s.with_transform(Matrix4::translate(5.0, 0.0, 0.0));
-        let xs = s.intersect(r);
+        let xs = s.intersect(&r);
 
         assert_eq!(xs.len(), 0);
     }
@@ -223,5 +237,14 @@ mod tests {
         s.material = m;
 
         assert_eq!(s.material, m);
+    }
+
+    #[test]
+    fn helper_for_producing_sphere_with_glassy_material() {
+        let s = Object::glass_orb();
+
+        assert_eq!(s.transform, Matrix4::identity());
+        assert_eq!(s.material.transparency, 1.0);
+        assert_eq!(s.material.ior, 1.5);
     }
 }

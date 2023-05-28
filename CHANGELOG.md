@@ -1,5 +1,19 @@
 # Change Log
 
+## [0.0.14] - 2023-05-29
+
+## Added
+- Materials: basic radial pattern.
+- Reflections.
+- Basic refraction.
+- UV manifold for spheres. Just be reminded that the resulting uv map should not be rotated - the object itself should.
+
+## Changed
+- Experimenting with jitter. Only some success on the gradient pattern.
+- Added borrows in places to make debugging a bit easier. Maybe will slightly improve performance.
+- Precomputed data now chains off Intersections instead of Intersection.
+- Objects can be toggled whether or not to cast a shadow (shadows cast by default).
+
 ## [0.0.13] - 2023-05-06
 
 ## Added

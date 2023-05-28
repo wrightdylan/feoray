@@ -1,5 +1,5 @@
 #![allow(unused)]
-use std::ops::{Add, Mul, Sub, AddAssign};
+use std::ops::{Add, Div, Mul, Sub, AddAssign};
 
 #[derive(Debug, Clone, Copy, PartialOrd)]
 pub struct Colour {
@@ -113,6 +113,18 @@ impl AddAssign for Colour {
         self.r += rhs.r;
         self.g += rhs.g;
         self.b += rhs.b;
+    }
+}
+
+impl Div<f32> for Colour {
+    type Output = Colour;
+
+    fn div(self, rhs: f32) -> Self::Output {
+        Colour {
+            r: self.r / rhs,
+            g: self.g / rhs,
+            b: self.b / rhs
+        }
     }
 }
 
